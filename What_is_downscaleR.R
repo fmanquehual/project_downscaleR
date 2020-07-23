@@ -2,7 +2,7 @@ library(visualizeR)
 library(downscaleR)
 library(transformeR)
 # # devtools::install_github("SantanderMetGroup/climate4R.datasets")
-# library(climate4R.datasets)
+library(climate4R.datasets)
 # # devtools::install_github("SantanderMetGroup/calibratoR", force = TRUE)
 # library(calibratoR)
 # # devtools::install_github("SantanderMetGroup/downscaleR.keras")
@@ -14,7 +14,8 @@ library(transformeR)
 # # install.packages("remotes")
 # library(remotes)
 
-data("VALUE_Iberia_tas") # illustrative datasets included in transformeR
+
+data("VALUE_Iberia_tas") # illustrative datasets included in climate4R.datasets
 y <- VALUE_Iberia_tas 
 
 data("NCEP_Iberia_hus850", "NCEP_Iberia_psl", "NCEP_Iberia_ta850")

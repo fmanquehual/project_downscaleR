@@ -12,7 +12,7 @@ library(loadeR.2nc)
 # Lectura de datos ----
 
 data(tx) # A climate4R grid
-
+spatialPlot(climatology(tx), backdrop.theme = "countries", color.theme = "RdYlBu")
 # fin ---
 
 
