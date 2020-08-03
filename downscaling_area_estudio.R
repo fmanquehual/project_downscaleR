@@ -1,20 +1,12 @@
-# ocupando el FTP de CEDA, ve a: /badc/cmip6/data/CMIP6/CMIP/
-# para ver datos historicos, y: /badc/cmip6/data/CMIP6/ScenarioMIP
-# para datos del futuro
-
 library(loadeR)
 library(visualizeR)
 library(downscaleR)
+library(ncdf4)
 
-# library(devtools)
+rm(list=ls())
+dev.off()
 
-# install_github(c(#"SantanderMetGroup/loadeR",
-#                  #"SantanderMetGroup/transformeR",
-#                  "SantanderMetGroup/visualizeR",
-#                  "SantanderMetGroup/downscaleR"))
-                 
-setwd('C:/Users/Usuario/Downloads/ej_descarga/CSIRO_ACCESS_ESM1-5_historical_r1i1p1f1_day_hus_gn_v20191115')
-
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/raster_descargados_con_rgee/')
 
 # filtro de datos ----
 meses <- 1:12
@@ -27,30 +19,75 @@ longitud <- c(-75, -72)
 
 
 
-# psl ----
+# Lectura nc ----
 
 # Lectura de datos
-psl <- 'psl_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
+list.files()
 
-ej <- nc_open(psl)
+variable <- 'tas.nc'
+
+ej <- nc_open(variable)
 ej
 
-di <- dataInventory(psl)
-str(di)
+di <- dataInventory(variable)
+
+# str(di)
+
+
+# EJEMPLO DE UN NC QUE SI LEE --------
+    # File psl_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc (NC_FORMAT_NETCDF4_CLASSIC):
+    #   
+    #   4 variables (excluding dimension variables):
+    #   double time_bnds[bnds,time]   
+    # double lat_bnds[bnds,lat]   
+    # double lon_bnds[bnds,lon]   
+    # float psl[lon,lat,time]   
+    # standard_name: air_pressure_at_mean_sea_level
+    # long_name: Sea Level Pressure
+    # comment: Sea Level Pressure
+    # units: Pa
+    # cell_methods: area: time: mean
+    # cell_measures: area: areacella
+    # history: 2019-11-15T17:46:53Z altered by CMOR: replaced missing value flag (-1.07374e+09) with standard missing value (1e+20).
+    # missing_value: 1.00000002004088e+20
+    # _FillValue: 1.00000002004088e+20
+    # 
+    # 4 dimensions:
+    #   time  Size:5479   *** is unlimited ***
+    #   bounds: time_bnds
+    # units: days since 1850-01-01
+    # calendar: proleptic_gregorian
+    # axis: T
+    # long_name: time
+    # standard_name: time
+    # lat  Size:145
+    # bounds: lat_bnds
+    # units: degrees_north
+    # axis: Y
+    # long_name: Latitude
+    # standard_name: latitude
+    # lon  Size:192
+    # bounds: lon_bnds
+    # units: degrees_east
+    # axis: X
+    # long_name: Longitude
+    # standard_name: longitude
+    # bnds  Size:2
+# FIN ------------------------
 
 C4R.vocabulary()
-psl.mean <- loadGridData(dataset = psl, 
-                   var = "psl",
-                   aggr.m = "mean",
-                   lonLim = longitud,
-                   latLim= latitud, 
-                   season= meses, 
-                   years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
-str(psl.mean)
+variable.mean <- loadGridData(dataset = variable, 
+                         var = "tas",
+                         #aggr.m = "mean",
+                         lonLim = longitud,
+                         latLim= latitud, 
+                         season= meses, 
+                         years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+str(variable.mean)
 
 # plot 
-spatialPlot(climatology(psl.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = psl)
+spatialPlot(climatology(variable.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
+            main = variable)
 
 # fin ---
 
@@ -63,12 +100,12 @@ hus <- 'hus_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20100101-20141231.nc'
 
 C4R.vocabulary()
 hus.mean <- loadGridData(dataset = hus, 
-                        var = "hus@1000.00000001",
-                        aggr.m = "mean",
-                        lonLim = longitud+c(-1, +1),
-                        latLim= latitud, 
-                        season= meses, 
-                        years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+                         var = "hus@1000.00000001",
+                         aggr.m = "mean",
+                         lonLim = longitud+c(-1, +1),
+                         latLim= latitud, 
+                         season= meses, 
+                         years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
 str(hus.mean)
 
 # plot 
@@ -111,8 +148,8 @@ ta <- 'ta_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20100101-20141231.nc'
 
 C4R.vocabulary()
 ta.mean <- loadGridData(dataset = ta, 
-                         var = "ta@1000.00000001",
-                         aggr.m = "mean",
+                        var = "ta@1000.00000001",
+                        aggr.m = "mean",
                         lonLim = longitud+c(-1, +1),
                         latLim= latitud, 
                         season= meses, 
@@ -135,8 +172,8 @@ pr <- 'pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
 
 C4R.vocabulary()
 pr.sum <- loadGridData(dataset = pr, 
-                        var = "pr",
-                        aggr.m = "sum",
+                       var = "pr",
+                       aggr.m = "sum",
                        lonLim = longitud,
                        latLim= latitud, 
                        season= meses, 
