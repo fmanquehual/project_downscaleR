@@ -26,7 +26,7 @@ setwd('/home/msomos/Documentos/proyecto_DownscaleR/proyecto_DownscaleR/mydirecto
 #               destfile = "Iberia_NCEP.tar.gz")
 
 # Extract files from the tar.gz file
-untar("Iberia_NCEP.tar.gz", exdir = "mydirectory")
+# untar("Iberia_NCEP.tar.gz", exdir = "mydirectory")
 
 # First, the path to the ncml file is defined:
 ncep.local <- "Iberia_NCEP/Iberia_NCEP.ncml"
@@ -34,7 +34,7 @@ ncep.local <- "Iberia_NCEP/Iberia_NCEP.ncml"
 di <- dataInventory(ncep.local)
 # e.g. temperature
 str(di$`2T`)
-
+di$`2T`
 
 # The corresponding variable name of 2m air temperature is "2T" and 
 # the units are Kelvin. We can load this data with `loadGridData`as follows:

@@ -2,11 +2,12 @@ library(loadeR)
 library(visualizeR)
 library(downscaleR)
 library(ncdf4)
+library(raster)
 
 rm(list=ls())
 dev.off()
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/raster_descargados_con_rgee/')
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CR2/')
 
 # filtro de datos ----
 meses <- 1:12
@@ -19,75 +20,36 @@ longitud <- c(-75, -72)
 
 
 
-# Lectura nc ----
+# Lectura nc ejemplo ----
+list.files()
+# untar(list.files()[8])
 
 # Lectura de datos
-list.files()
-
-variable <- 'tas.nc'
+archivos <- list.files(pattern = '.nc') ; archivos
+variable <- archivos[1]
 
 ej <- nc_open(variable)
 ej
 
+# ej2 <- raster(variable)
+# plot(ej2, 1:2)
+
 di <- dataInventory(variable)
-
-# str(di)
-
-
-# EJEMPLO DE UN NC QUE SI LEE --------
-    # File psl_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc (NC_FORMAT_NETCDF4_CLASSIC):
-    #   
-    #   4 variables (excluding dimension variables):
-    #   double time_bnds[bnds,time]   
-    # double lat_bnds[bnds,lat]   
-    # double lon_bnds[bnds,lon]   
-    # float psl[lon,lat,time]   
-    # standard_name: air_pressure_at_mean_sea_level
-    # long_name: Sea Level Pressure
-    # comment: Sea Level Pressure
-    # units: Pa
-    # cell_methods: area: time: mean
-    # cell_measures: area: areacella
-    # history: 2019-11-15T17:46:53Z altered by CMOR: replaced missing value flag (-1.07374e+09) with standard missing value (1e+20).
-    # missing_value: 1.00000002004088e+20
-    # _FillValue: 1.00000002004088e+20
-    # 
-    # 4 dimensions:
-    #   time  Size:5479   *** is unlimited ***
-    #   bounds: time_bnds
-    # units: days since 1850-01-01
-    # calendar: proleptic_gregorian
-    # axis: T
-    # long_name: time
-    # standard_name: time
-    # lat  Size:145
-    # bounds: lat_bnds
-    # units: degrees_north
-    # axis: Y
-    # long_name: Latitude
-    # standard_name: latitude
-    # lon  Size:192
-    # bounds: lon_bnds
-    # units: degrees_east
-    # axis: X
-    # long_name: Longitude
-    # standard_name: longitude
-    # bnds  Size:2
-# FIN ------------------------
+names(di)
 
 C4R.vocabulary()
 variable.mean <- loadGridData(dataset = variable, 
-                         var = "tas",
-                         #aggr.m = "mean",
-                         lonLim = longitud,
-                         latLim= latitud, 
-                         season= meses, 
+                         var = "pr",
+                         # aggr.m = "mean")
+                         # lonLim = longitud,
+                         # latLim= latitud, 
+                         season= meses,
                          years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
 str(variable.mean)
 
 # plot 
 spatialPlot(climatology(variable.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = variable)
+            main = variable, zcol = 1:4)
 
 # fin ---
 
