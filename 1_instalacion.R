@@ -15,9 +15,6 @@ library(rJava)
 Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk1.8.0_261")  #Windows
 Sys.getenv("JAVA_HOME")
 
-# devtools::install_github(c("SantanderMetGroup/loadeR.java", "SantanderMetGroup/loadeR"))
-# 
-# devtools::install_github(c("SantanderMetGroup/loadeR.java", "SantanderMetGroup/climate4R.UDG", "SantanderMetGroup/loadeR"))
 
 # En R ----
 # Verificar si ya tienes instalado 'devtools' para descargar desde github
@@ -25,9 +22,22 @@ Sys.getenv("JAVA_HOME")
 library(devtools)
 
 install_github(c('SantanderMetGroup/climate4R.UDG@devel', 'SantanderMetGroup/loadeR'))
+install_github('SantanderMetGroup/loadeR.2nc')
+install_github("SantanderMetGroup/loadeR.java", force = TRUE)
+
+install_github(c("SantanderMetGroup/loadeR.java",
+                 "SantanderMetGroup/climate4R.UDG@devel",
+                 "SantanderMetGroup/loadeR",
+                 "SantanderMetGroup/transformeR",
+                 "SantanderMetGroup/visualizeR",
+                 "SantanderMetGroup/downscaleR"))
+
+# si tienes problemas con 'rlang', 'ellipsis', 'fansi', instalalo manualmente y vuelve a instalar visualizeR
+install_github("SantanderMetGroup/visualizeR")
+
+install_github("SantanderMetGroup/downscaleR")
 
 # library(installr)
-# 
 # uninstall.packages(c("visualizeR",
 #   "transformeR",
 #   "loadeR-devel",
@@ -38,16 +48,16 @@ install_github(c('SantanderMetGroup/climate4R.UDG@devel', 'SantanderMetGroup/loa
 #                      
 #                      "climate4R.UDG"))
 
-install_github(c(
-                 
-                 "SantanderMetGroup/transformeR",
-                 "SantanderMetGroup/downscaleR",
-                 "SantanderMetGroup/visualizeR"
-                 
-                 # "SantanderMetGroup/climate4R.UDG",
-                 # "SantanderMetGroup/loadeR.java",
-                 # "SantanderMetGroup/loadeR",
-                 ))
+# install_github(c(
+#                  
+#                  "SantanderMetGroup/transformeR",
+#                  "SantanderMetGroup/downscaleR",
+#                  "SantanderMetGroup/visualizeR"
+#                  
+#                  # "SantanderMetGroup/climate4R.UDG",
+#                  # "SantanderMetGroup/loadeR.java",
+#                  # "SantanderMetGroup/loadeR",
+#                  ))
 
 
 

@@ -11,6 +11,7 @@ identificador_de_archivo <- function(nombre.archivo.de.referencia, nombre.de.arc
   for(i in 1:nrow(coincidencia.nombre.de.archivos)){
      # i <- 50
     nombre1.i <- coincidencia.nombre.de.archivos$nombre.archivo[i]
+    nombre1.i <- as.character(nombre1.i)
     
     ###
         #porcentaje.de.coincidencia <- coincidencia_entre_nombres_de_archivos(nombre2, nombre1.i) ; porcentaje.de.coincidencia
