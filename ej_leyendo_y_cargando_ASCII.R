@@ -1,6 +1,15 @@
 library(loadeR)
 library(visualizeR)
 library(downscaleR)
+library(transformeR)
+
+rm(list=ls())
+dev.off()
+
+# Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk1.8.0_261/")  #Windows
+# Sys.getenv("JAVA_HOME")
+
+
 
 # descargando datos ----
 
@@ -28,12 +37,16 @@ library(downscaleR)
 
 # Explorando contenido de la carpeta ----
 
-setwd('C:/Users/Usuario/Downloads/VALUE_ECA_86_v2/')
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/')
 dir()
 
 read.table("stations.txt", sep = ",", header = TRUE)
 read.table("variables.txt", sep = ",", header = TRUE)
 read.table("tmin.txt", sep = ",", header = TRUE)
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
+read.table("tmin.txt", sep = ",", header = TRUE)
+
 
 # fin ---
 
@@ -44,7 +57,7 @@ read.table("tmin.txt", sep = ",", header = TRUE)
 
 nombre.carpeta <- 'VALUE_ECA_86_v2'
 
-setwd('C:/Users/Usuario/Downloads/')
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 di <- dataInventory(dataset = nombre.carpeta)
 di
 
@@ -57,26 +70,37 @@ stationInfo(nombre.carpeta)
 
 # fin ---
 
+nombre.carpeta2 <- 'datos_transformados_a_ASCII'
 
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
+dj <- dataInventory(dataset = nombre.carpeta2)
+dj$Summary.stats
+dj
+
+stationInfo(nombre.carpeta2)
 
 
 # Time series ----
-setwd('C:/Users/Usuario/Downloads/VALUE_ECA_86_v2/')
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 
-example1 <- loadStationData(dataset = 'tmax.txt', 
-                            var="tmax", 
-                            stationID = c("000234", "003946"), 
-                            season = 6:8, 
-                            years = 1981:2000)
+example1 <- loadStationData(dataset = nombre.carpeta2, 
+                            var="tmin", 
+                            stationID = c('Bahia.Murta_DGA', 'BalmacedaAd_DMC', 'Chile.ChicoAd_DMC', 'Cochrane_INIA'),
+                            years = 2010)
+
+balmaceda <- subsetGrid(example1, station.id = "BalmacedaAd_DMC")
+cochrane <- subsetGrid(example1, station.id = "Cochrane_INIA")
+
+temporalPlot(balmaceda, cochrane, xyplot.custom = list(ylab = "Minimum Temperature ºC"))
+spatialPlot(climatology(example1), backdrop.theme = "countries", colorkey = T)
+
 # fin ---
 
 
 
 
-# ----
 
-
-
+# estaciones a nivel mundial ----
 # setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 # dir.create('mydirectory')
 # download.file("http://meteo.unican.es/work/loadeR/data/GSN_World.tar.gz",
@@ -87,11 +111,6 @@ example1 <- loadStationData(dataset = 'tmax.txt',
 
 # Define the path to the data directory
 
-library(rJava)
-
-Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk1.8.0_261")  #Windows
-Sys.getenv("JAVA_HOME")
-
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 
 gsn <- "mydirectory/GSN_World/"
@@ -100,3 +119,8 @@ di <- dataInventory(dataset = gsn)
 
 gsn <- "mydirectory/GSN_World"
 gsnload <- loadStationData(gsn, var = "tmean")
+spatialPlot(climatology(gsnload), backdrop.theme = "coastline", colorkey = T)
+# fin ---
+
+
+# fuente: https://github.com/SantanderMetGroup/loadeR/wiki/Accessing-and-loading-station-data

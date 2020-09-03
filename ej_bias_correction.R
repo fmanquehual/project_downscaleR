@@ -23,8 +23,8 @@ anhos <- 2010:2011
 # latitud <- c(-49, -36)
 # longitud <- c(-75, -71)
 
-latitud <- c(-48, -47)
-longitud <- c(-73, -72)
+latitud <- c(-46, -48)
+longitud <- c(-74, -71)
 
 # fin ---
 
