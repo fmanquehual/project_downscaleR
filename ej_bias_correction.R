@@ -139,7 +139,7 @@ neuralnet <- subsetGrid(modelo.neuralnet$pred, years = 2010:2011)
 # plot
 # temporalPlot(referencia, analog, regression, neuralnet, lty = c(1,1,2,1), lwd = c(4, 2, 2, 2), 
 #              cols = c('black', 'green', 'red', 'blue'))
-temporalPlot(referencia, analog, neuralnet)
+temporalPlot(referencia, analog, neuralnet, aggr.spatial = list(FUN = mean, na.rm = TRUE))
 # temporalPlot(referencia, regression, lty = c(1,2), lwd = c(4, 2))
 
 spatialPlot(climatology(analog), backdrop.theme = "countries", color.theme = "RdYlBu",
@@ -181,16 +181,16 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/downscaled_WRF/'
 nombre.carpeta2 <- 'datos_transformados_a_ASCII'
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
-dj <- dataInventory(dataset = nombre.carpeta2, return.stats = TRUE)
-dj$Summary.stats
-dj
+obs.t <- dataInventory(dataset = nombre.carpeta2, return.stats = TRUE)
+obs.t$Summary.stats
+obs.t
 
 stationInfo(nombre.carpeta2)
 
 rcp85.su <- climdexGrid(tx = rcp85.tx, index.code = "SU")
 rcp85.SU <- interpGrid(rcp85.su, getGrid(obs.SU))
 
-rcp85.bc.tx <- biasCorrection(y = obs.tx, x = rcm.tx,
+rcp85.bc.tx <- biasCorrection(y = obs.t, x = rcm.tx,
                               newdata = rcp85.tx, method = "eqm")
 
 rcp85.bc.SU <- climdexGrid(tx = rcp85.bc.tx , index.code = "SU")

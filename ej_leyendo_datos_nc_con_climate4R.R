@@ -2,55 +2,49 @@
 # para ver datos historicos, y: /badc/cmip6/data/CMIP6/ScenarioMIP
 # para datos del futuro
 
+library(ncdf4)
 library(loadeR)
 library(visualizeR)
 library(downscaleR)
 
-# library(devtools)
-
-# install_github(c(#"SantanderMetGroup/loadeR",
-#                  #"SantanderMetGroup/transformeR",
-#                  "SantanderMetGroup/visualizeR",
-#                  "SantanderMetGroup/downscaleR"))
-                 
-setwd('C:/Users/Usuario/Downloads/ej_descarga/CSIRO_ACCESS_ESM1-5_historical_r1i1p1f1_day_hus_gn_v20191115')
-
 
 # filtro de datos ----
 meses <- 1:12
-anhos <- 2010:2014
+anhos <- 2010
 latitud <- c(-36,-49)
 longitud <- c(-75, -72)
 
 # fin ---
 
 
+# DESCARGA CON OTRA INSTITUCION (NO CSIRO) PQ TIENES PROBLEMAS CON ESPECIFICAR EL NIVEL (TIENE MUCHOS DECIMALES AL PARECER Y LA FUNCION NO LOS MUESTRA)
 
+# ps ----
 
-# psl ----
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ps/')
 
 # Lectura de datos
-psl <- 'psl_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
+ps <- 'ps_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201501010000.nc'
 
-ej <- nc_open(psl)
-ej
+# ej <- nc_open(ps)
+# ej
 
-di <- dataInventory(psl)
+di <- dataInventory(ps)
 str(di)
 
 C4R.vocabulary()
-psl.mean <- loadGridData(dataset = psl, 
-                   var = "psl",
-                   aggr.m = "mean",
+ps.mean <- loadGridData(dataset = ps, 
+                   var = "ps",
+                   aggr.d = "mean",
                    lonLim = longitud,
                    latLim= latitud, 
                    season= meses, 
                    years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
-str(psl.mean)
+str(ps.mean)
 
 # plot 
-spatialPlot(climatology(psl.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = psl)
+spatialPlot(climatology(ps.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
+            main = ps)
 
 # fin ---
 
@@ -58,22 +52,30 @@ spatialPlot(climatology(psl.mean), backdrop.theme = "countries", color.theme = "
 
 # hus ----
 
-# Lectura de datos
-hus <- 'hus_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20100101-20141231.nc'
-
-C4R.vocabulary()
-hus.mean <- loadGridData(dataset = hus, 
-                        var = "hus@1000.00000001",
-                        aggr.m = "mean",
-                        lonLim = longitud+c(-1, +1),
-                        latLim= latitud, 
-                        season= meses, 
-                        years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
-str(hus.mean)
-
-# plot 
-spatialPlot(climatology(hus.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = hus)
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/hus/')
+# 
+# # Lectura de datos
+# hus <- 'hus_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201101010000.nc'
+# 
+# ej <- nc_open(hus)
+# ej
+# 
+# variable <- ncvar_get(ej,'lev') #extracci?n valores variable
+# variable[1]
+# 
+# C4R.vocabulary()
+# hus.mean <- loadGridData(dataset = hus, 
+#                         var = "hus@980.00085",
+#                         aggr.d = "mean",
+#                         lonLim = longitud,#+c(-1, +1),
+#                         latLim= latitud, 
+#                         season= meses, 
+#                         years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+# str(hus.mean)
+# 
+# # plot 
+# spatialPlot(climatology(hus.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
+#             main = hus)
 
 # fin ---
 
@@ -82,13 +84,15 @@ spatialPlot(climatology(hus.mean), backdrop.theme = "countries", color.theme = "
 
 # tas ----
 
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ta/')
+
 # Lectura de datos
-tas <- 'tas_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
+ta <- 'ta_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201101010000.nc'
 
 C4R.vocabulary()
-tas.mean <- loadGridData(dataset = tas, 
-                         var = "tas",
-                         aggr.m = "mean",
+tas.mean <- loadGridData(dataset = ta, 
+                         var = "ta@500.000591707585",
+                         aggr.d = "mean",
                          lonLim = longitud,
                          latLim= latitud, 
                          season= meses, 
