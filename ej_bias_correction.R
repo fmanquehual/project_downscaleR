@@ -127,20 +127,20 @@ data <- prepareData(x = predictores, y = tmin.mean)
 
 # Fitting statistical downscaling methods (simple case, no cross-validation)
 modelo.analog <- downscaleTrain(data, method = "analogs", n.analogs = 1)
-modelo.regression <- downscaleTrain(data, method = "GLM",family = gaussian)
-modelo.neuralnet <- downscaleTrain(data, method = "NN", hidden = c(10,5), output = "linear")
+# modelo.regression <- downscaleTrain(data, method = "GLM",family = gaussian)
+modelo.neuralnet <- downscaleTrain(data, method = "NN", output = "linear")
 
 # Extracting the results for a particula station (Igueldo) for a single year (2000)
 referencia <- subsetGrid(tmin.mean, years = 2010:2011)
 analog <- subsetGrid(modelo.analog$pred, years = 2010:2011)
-regression <- subsetGrid(modelo.regression$pred, years = 2010:2011)
+# regression <- subsetGrid(modelo.regression$pred, years = 2010:2011)
 neuralnet <- subsetGrid(modelo.neuralnet$pred, years = 2010:2011)
 
 # plot
-temporalPlot(referencia, analog, regression, neuralnet, lty = c(1,1,2,1), lwd = c(4, 2, 2, 2), 
-             cols = c('black', 'green', 'red', 'blue'))
+# temporalPlot(referencia, analog, regression, neuralnet, lty = c(1,1,2,1), lwd = c(4, 2, 2, 2), 
+#              cols = c('black', 'green', 'red', 'blue'))
 temporalPlot(referencia, analog, neuralnet)
-temporalPlot(referencia, regression, lty = c(1,2), lwd = c(4, 2))
+# temporalPlot(referencia, regression, lty = c(1,2), lwd = c(4, 2))
 
 spatialPlot(climatology(analog), backdrop.theme = "countries", color.theme = "RdYlBu",
             main = 'downscaled')
@@ -171,13 +171,21 @@ spatialPlot(climatology(pred), backdrop.theme = "countries", color.theme = "YlGn
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/downscaled_WRF/')
 
-# f <- "EUR44.*EC-EARTH.*RCA*RCP85.*RCA4" # original
-f <- "downscaled_WRF_referencia.asc"
-# fut <- UDG.datasets(pattern = f, full.info = TRUE)$CORDEX
-rcp85.tx <- loadGridData(f, var = "pr",
-                         years = 2071:2100, season = seas,
-                         lonLim = lon, latLim = lat)
-loadStationData(f)
+# # f <- "EUR44.*EC-EARTH.*RCA*RCP85.*RCA4" # original
+# f <- "downscaled_WRF_referencia.asc"
+# # fut <- UDG.datasets(pattern = f, full.info = TRUE)$CORDEX
+# rcp85.tx <- loadGridData(f, var = "pr",
+#                          years = 2071:2100, season = seas,
+#                          lonLim = lon, latLim = lat)
+
+nombre.carpeta2 <- 'datos_transformados_a_ASCII'
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
+dj <- dataInventory(dataset = nombre.carpeta2, return.stats = TRUE)
+dj$Summary.stats
+dj
+
+stationInfo(nombre.carpeta2)
 
 rcp85.su <- climdexGrid(tx = rcp85.tx, index.code = "SU")
 rcp85.SU <- interpGrid(rcp85.su, getGrid(obs.SU))

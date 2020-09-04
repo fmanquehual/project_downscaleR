@@ -73,7 +73,7 @@ stationInfo(nombre.carpeta)
 nombre.carpeta2 <- 'datos_transformados_a_ASCII'
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
-dj <- dataInventory(dataset = nombre.carpeta2)
+dj <- dataInventory(dataset = nombre.carpeta2, return.stats = TRUE)
 dj$Summary.stats
 dj
 

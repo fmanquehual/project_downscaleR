@@ -88,7 +88,7 @@ head(estaciones)
 head(db.todos)
 
 estaciones.db.todos0 <- data.frame(station_id = db.todos$archivo.con.coordenadas, name = db.todos$archivo.con.coordenadas,
-                                  longitude = db.todos$lon, latitude = db.todos$lat, altitude = NA, 
+                                  longitude = db.todos$lon, latitude = db.todos$lat, altitude = NaN, 
                                   source = db.todos$archivo.con.datos.climaticos)
 estaciones.db.todos <- estaciones.db.todos0[!duplicated(estaciones.db.todos0$name), ]
 estaciones.db.todos
@@ -98,7 +98,7 @@ head(estaciones.db.todos)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 # write.table(estaciones.db.todos, file='stations.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE)
+#             append=FALSE, quote=FALSE, na = 'NaN')
 
 
 
@@ -106,7 +106,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 # informacion de variables
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/')
 variables <- read.table("variables.txt", sep = ",", header = TRUE)
-variables$missing_code <- NA
+variables$missing_code <- NaN
 
 variables1 <- variables
 id <- which(variables1$variable_id%in%variable.de.interes)
@@ -116,7 +116,7 @@ variables2
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 # write.table(variables2, file='variables.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE)
+#             append=FALSE, quote=FALSE, na = 'NaN')
 
 
 # variable
@@ -148,12 +148,13 @@ for (i in 1:length(nombre.archivos.i)) {
   
 }
 
-matriz.de.valores.por.estacion0
+matriz.de.valores.por.estacion <- matriz.de.valores.por.estacion0
 
-# for (j in 2:ncol(matriz.de.valores.por.estacion0)) {
-#   matriz.de.valores.por.estacion0[,j][matriz.de.valores.por.estacion0[,j]%in%NA] <- 'NaN'  
-# }
+for (j in 2:ncol(matriz.de.valores.por.estacion0)) {
+  matriz.de.valores.por.estacion[,j][matriz.de.valores.por.estacion[,j]%in%NA] <- NaN
+}
 
+matriz.de.valores.por.estacion
 
 ##
 # Hay que darle este formato!!
@@ -182,7 +183,7 @@ matriz.de.valores.por.estacion0
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 # write.table(matriz.de.valores.por.estacion0, file='tmin.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE)
+#             append=FALSE, quote=FALSE, na = 'NaN')
 
 # fin ---
 
