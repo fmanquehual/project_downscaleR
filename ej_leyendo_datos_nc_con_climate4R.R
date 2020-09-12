@@ -6,45 +6,74 @@ library(ncdf4)
 library(loadeR)
 library(visualizeR)
 library(downscaleR)
+library(filesstrings) # para mover archivos entre carpetas
+library(climate4R.climdex)
 
+rm(list=ls())
+dev.off()
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
+source('funcion_identificador_de_variables_era5_CEDA.R')
 
 # filtro de datos ----
 meses <- 1:12
 anhos <- 2010
-latitud <- c(-36,-49)
+latitud <- c(-49,-36)
 longitud <- c(-75, -72)
 
 # fin ---
 
 
-# DESCARGA CON OTRA INSTITUCION (NO CSIRO) PQ TIENES PROBLEMAS CON ESPECIFICAR EL NIVEL (TIENE MUCHOS DECIMALES AL PARECER Y LA FUNCION NO LOS MUESTRA)
+### DESCARGA CON OTRA INSTITUCION (NO CSIRO) PQ TIENES PROBLEMAS CON ESPECIFICAR EL NIVEL (TIENE ...
+### MUCHOS DECIMALES AL PARECER Y LA FUNCION NO LOS MUESTRA)
+
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA5/CEDA/2010/01/01/')
+# variables <- identificador_de_variables_era5_CEDA(frase_inicial_no_numerica='ecmwf-era5_oper_an_sfc_',
+#                                                   nombre_de_variables=TRUE,
+#                                                   fecha_y_hora_de_datos=FALSE)
+# variables
+# variable.i <- '2d'
+#   
+# archivos.i <- list.files(pattern = variable.i)
+# list.dirs()
+# dir.create(variable.i)
+# file.move(archivos.i, destinations = variable.i, overwrite = TRUE)
+
+### Ahora que pudiste leer datos del ERA5, prueba con los de copernicus!
+
+
+
 
 # ps ----
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ps/')
+# Lectura de datos
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CMIP6/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ps')
+# ps <- 'ps_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201501010000.nc'
 
 # Lectura de datos
-ps <- 'ps_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201501010000.nc'
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA5/copernicus/')
+ERA5 <- 'ERA5_2010.nc'
 
-# ej <- nc_open(ps)
-# ej
+# ej <- nc_open(ERA5, verbose = TRUE)
 
-di <- dataInventory(ps)
-str(di)
+di <- dataInventory(ERA5)
+di$sp
 
 C4R.vocabulary()
-ps.mean <- loadGridData(dataset = ps, 
-                   var = "ps",
+ps.mean <- loadGridData(dataset = ERA5, 
+                   var = "sp",
                    aggr.d = "mean",
+                   aggr.m = "mean",
                    lonLim = longitud,
                    latLim= latitud, 
                    season= meses, 
-                   years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+                   years = anhos,
+                   time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
 str(ps.mean)
 
 # plot 
 spatialPlot(climatology(ps.mean), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = ps)
+            main = '')
 
 # fin ---
 
@@ -82,28 +111,29 @@ spatialPlot(climatology(ps.mean), backdrop.theme = "countries", color.theme = "Y
 
 
 
-# tas ----
-
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ta/')
-
-# Lectura de datos
-ta <- 'ta_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201101010000.nc'
-
-C4R.vocabulary()
-tas.mean <- loadGridData(dataset = ta, 
-                         var = "ta@500.000591707585",
-                         aggr.d = "mean",
-                         lonLim = longitud,
-                         latLim= latitud, 
-                         season= meses, 
-                         years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
-str(tas.mean)
-
-# plot 
-spatialPlot(climatology(tas.mean), backdrop.theme = "countries", color.theme = "RdYlBu",
-            rev.colors = TRUE, main = tas)
-
-# fin ---
+# # tas ----
+# 
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_era5/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/6hrLev/ta/')
+# 
+# # Lectura de datos
+# ta <- 'ta_6hrLev_ACCESS-ESM1-5_historical_r1i1p1f1_gn_201001010600-201101010000.nc'
+# 
+# 
+# C4R.vocabulary()
+# tas.mean <- loadGridData(dataset = ta, 
+#                          var = "ta@500.000591707585",
+#                          aggr.d = "mean",
+#                          lonLim = longitud,
+#                          latLim= latitud, 
+#                          season= meses, 
+#                          years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+# str(tas.mean)
+# 
+# # plot 
+# spatialPlot(climatology(tas.mean), backdrop.theme = "countries", color.theme = "RdYlBu",
+#             rev.colors = TRUE, main = tas)
+# 
+# # fin ---
 
 
 
@@ -111,21 +141,23 @@ spatialPlot(climatology(tas.mean), backdrop.theme = "countries", color.theme = "
 # ta ----
 
 # Lectura de datos
-ta <- 'ta_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20100101-20141231.nc'
+# ta <- 'ta_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20100101-20141231.nc'
 
-C4R.vocabulary()
-ta.mean <- loadGridData(dataset = ta, 
-                         var = "ta@1000.00000001",
-                         aggr.m = "mean",
-                        lonLim = longitud+c(-1, +1),
+#C4R.vocabulary()
+ta.mean <- loadGridData(dataset = ERA5, 
+                        var = "t2m",
+                        aggr.d = "mean",
+                        aggr.m = "mean",
+                        lonLim = longitud,#+c(-1, +1),
                         latLim= latitud, 
                         season= meses, 
-                        years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+                        years = anhos,
+                        time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
 str(ta.mean)
 
 # plot 
 spatialPlot(climatology(ta.mean), backdrop.theme = "countries", color.theme = "RdYlBu",
-            rev.colors = TRUE, main = ta)
+            rev.colors = TRUE, main = '')
 
 # fin ---
 
@@ -135,21 +167,23 @@ spatialPlot(climatology(ta.mean), backdrop.theme = "countries", color.theme = "R
 # pr ----
 
 # Lectura de datos
-pr <- 'pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
+# pr <- 'pr_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
 
-C4R.vocabulary()
-pr.sum <- loadGridData(dataset = pr, 
-                        var = "pr",
-                        aggr.m = "sum",
+# C4R.vocabulary()
+pr.sum <- loadGridData(dataset = ERA5, 
+                       var = "tp",
+                       aggr.d = "sum",
+                       aggr.m = "sum",
                        lonLim = longitud,
                        latLim= latitud, 
                        season= meses, 
-                       years = anhos) # obtain daily (aggr.d) or monthly (aggr.m) data )
+                       years = anhos,
+                       time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
 str(pr.sum)
 
 # plot 
 spatialPlot(climatology(pr.sum), backdrop.theme = "countries", color.theme = "YlGnBu",
-            main = pr)
+            main = '')
 
 # fin ---
 
@@ -158,27 +192,27 @@ spatialPlot(climatology(pr.sum), backdrop.theme = "countries", color.theme = "Yl
 
 # Predictores ----
 
-predictores <- makeMultiGrid(hus.mean, ta.mean)
+predictores <- makeMultiGrid(ps.mean, ta.mean)#, skip.temporal.check=TRUE) # activalo si tienes datos horarios o diarios
 
 # calculating predictors
-data <- prepareData(x = predictores, y = tas.mean) 
+data <- prepareData(x = predictores, y = pr.sum) 
 
 # Fitting statistical downscaling methods (simple case, no cross-validation)
 modelo.analog <- downscaleTrain(data, method = "analogs", n.analogs = 1)
-modelo.regression <- downscaleTrain(data, method = "GLM",family = gaussian)
-modelo.neuralnet <- downscaleTrain(data, method = "NN", hidden = c(10,5), output = "linear")
+# modelo.regression <- downscaleTrain(data, method = "GLM",family = gaussian)
+# modelo.neuralnet <- downscaleTrain(data, method = "NN", output = "linear")
 
 # Extracting the results for a particula station (Igueldo) for a single year (2000)
-referencia <- subsetGrid(tas.mean, years = 2010:2014)
-analog <- subsetGrid(modelo.analog$pred, years = 2010:2014)
-regression <- subsetGrid(modelo.regression$pred, years = 2010:2014)
-neuralnet <- subsetGrid(modelo.neuralnet$pred, years = 2010:2014)
+referencia <- subsetGrid(pr.sum, years = 2010)
+analog <- subsetGrid(modelo.analog$pred, years = 2010)
+# regression <- subsetGrid(modelo.regression$pred, years = 2010:2014)
+# neuralnet <- subsetGrid(modelo.neuralnet$pred, years = 2010)
 
 # plot
-temporalPlot(referencia, analog, regression, neuralnet, lty = c(1,1,2,1), lwd = c(4, 2, 2, 2), 
-             cols = c('black', 'green', 'red', 'blue'))
-temporalPlot(referencia, analog, neuralnet)
-temporalPlot(referencia, regression, lty = c(1,2), lwd = c(4, 2))
+# temporalPlot(referencia, analog, regression, neuralnet, lty = c(1,1,2,1), lwd = c(4, 2, 2, 2), 
+#              cols = c('black', 'green', 'red', 'blue'))
+temporalPlot(referencia, analog)
+# temporalPlot(referencia, regression, lty = c(1,2), lwd = c(4, 2))
 
 spatialPlot(climatology(analog), backdrop.theme = "countries", color.theme = "RdYlBu",
             main = 'downscaled')
@@ -209,17 +243,59 @@ spatialPlot(climatology(pred), backdrop.theme = "countries", color.theme = "YlGn
 # model are loaded from the RCP8.5 scenario (2071-2100)
 # and bias adjusted using the biasCorrection function.
 
-# f <- "EUR44.*EC-EARTH.*RCA*RCP85.*RCA4" # original
-f <- "EUR44.*EC-EARTH.*RCP85.*RCA4"
-fut <- UDG.datasets(pattern = f, full.info = TRUE)$CORDEX
-rcp85.tx <- loadGridData(fut$name[1], var = "tasmax",
-                         years = 2071:2100, season = seas,
-                         lonLim = lon, latLim = lat)
+# datos observados
 
-rcp85.su <- climdexGrid(tx = rcp85.tx, index.code = "SU")
-rcp85.SU <- interpGrid(rcp85.su, getGrid(obs.SU))
 
-rcp85.bc.tx <- biasCorrection(y = obs.tx, x = rcm.tx,
+# presente
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CMIP6/CSIRO/ACCESS-ESM1-5/historical/r1i1p1f1/day/tasmax/')
+archivo.j <- 'tasmax_day_ACCESS-ESM1-5_historical_r1i1p1f1_gn_20000101-20141231.nc'
+
+dj <- dataInventory(archivo.j)
+str(dj)
+dj$tasmax
+
+historical.tx <- loadGridData(archivo.j, 
+                         var = "tasmax",
+                         years = 2000:2014, 
+                         aggr.d = "mean",
+                         #aggr.m = "mean",
+                         season = meses,
+                         lonLim = longitud, 
+                         latLim = latitud,
+                         time = 'DD')
+
+climdexShow() # para ver los indices disponibles
+spatialPlot(climatology(historical.tx), backdrop.theme = "countries", color.theme = "RdYlBu")
+
+historical.tx.su <- climdexGrid(tx = historical.tx, index.code = "TXx")
+spatialPlot(climatology(historical.tx.su), backdrop.theme = "countries", color.theme = "RdYlBu")
+
+
+# futuro
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CMIP6/CSIRO/ACCESS-ESM1-5/ssp585/r1i1p1f1/day/tasmax/')
+archivo.i <- 'tasmax_day_ACCESS-ESM1-5_ssp585_r1i1p1f1_gn_20150101-20641231.nc'
+
+di <- dataInventory(archivo.i)
+str(di)
+di$tasmax
+
+rcp85.tx <- loadGridData(archivo.i, 
+                         var = "tasmax",
+                         years = 2015:2064, 
+                         aggr.d = "mean",
+                         #aggr.m = "mean",
+                         season = meses,
+                         lonLim = longitud, 
+                         latLim = latitud,
+                         time = 'DD')
+
+spatialPlot(climatology(rcp85.tx), backdrop.theme = "countries", color.theme = "RdYlBu")
+
+rcp85.tx.su <- climdexGrid(tx = rcp85.tx, index.code = "TXx")
+
+
+# bias correction
+rcp85.bc.tx <- biasCorrection(y = historical.tx, x = ...,
                               newdata = rcp85.tx, method = "eqm")
 
 rcp85.bc.SU <- climdexGrid(tx = rcp85.bc.tx , index.code = "SU")

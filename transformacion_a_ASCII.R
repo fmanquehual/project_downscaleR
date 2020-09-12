@@ -1,6 +1,6 @@
 library(PerformanceAnalytics)
-library(raster)
 library(rgdal)
+library(raster)
 
 rm(list=ls())
 dev.off()
@@ -8,18 +8,10 @@ dev.off()
 # Llamada de funciones ----
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR')
-source('funcion_anhadiendo_coordenadas.R')
-source('funcion_verificacion_anhos_de_interes.R')
-source('funcion_coincidencia_entre_nombres_de_archivos.R')
-source('funcion_identificador_de_archivo.R')
 source('funcion_anhadiendo_altitud.R')
-source('funcion_datos_observados_en_formato_ts.R')
-
-setwd('C:/Users/Usuario/Documents/Francisco/WRF/proyecto_WRF/proyecto_WRF_complementario/')
-source('funcion_nombre_estacion.R')
-source('funcion_db_a_serie_de_tiempo.R')
-source('funcion_preparacion_db_para_serie_de_tiempo.R')
-
+source('funcion_localizacion_directorio_de_trabajo.R')
+source('funcion_generador_de_matriz.R')
+source('funcion_union_db_valores_observados_y_coordenadas.R')
 
 # fin ---
 
@@ -38,39 +30,58 @@ tail(db.estaciones)
 # Preparacion de db ----
 
 anhos.interes <- 2008:2017
+
+
+# tmin
 variable.de.interes <- 'tmin'
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/ParaTaylorTmin/')
-archivos.i <- list.files()
-db.todos <- c()
+directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
+setwd(directorio.de.trabajo)
+archivos.tmin <- list.files()
 
-for (i in 1:length(archivos.i)) {
- #i <- 2
-  print(i)
-  
-  setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/ParaTaylorTmin/')
-  # Lectura de archivos
-  db.i <- read.csv(archivos.i[i])
-  
-  # Testeo y omicion de archivos sin datos para los anhos de interes
-  anhos.observados.i <- verificacion_anhos_de_interes(db.i)
-  match.i <- anhos.interes[anhos.interes%in%anhos.observados.i]
-  if( length(match.i)==0 ){c(message( paste(archivos.i[i], 'no tiene datos para los anhos de interes!', sep = ' ') ), 
-                             next)}
-  
-  # Preparacion de archivo final
-  db2.i <- datos_observados_en_formato_ts(db.i, anhos.interes, variable = variable.de.interes)
-  db3.i <- anhadiendo_coordenadas(db2.i, archivos.i[i], variable = variable.de.interes)
-  db.todos <- rbind(db.todos, db3.i)
-  
-}
+db.tmin <- union_db_valores_observados_y_coordenadas(archivos.tmin, variable.de.interes, directorio.de.trabajo)
+
+head(db.tmin)
+tail(db.tmin)
+dim(db.tmin)
+
+
+# tmax
+variable.de.interes <- 'tmax'
+
+directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
+setwd(directorio.de.trabajo)
+archivos.tmax <- list.files()
+
+db.tmax <- union_db_valores_observados_y_coordenadas(archivos.tmax, variable.de.interes, directorio.de.trabajo)
+
+head(db.tmax)
+tail(db.tmax)
+dim(db.tmax)
+
+
+# pp
+variable.de.interes <- 'pp'
+
+directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
+setwd(directorio.de.trabajo)
+archivos.pp <- list.files()
+
+db.pp <- union_db_valores_observados_y_coordenadas(archivos.pp, variable.de.interes, directorio.de.trabajo)
+db.pp$variable <- 'precip'
+
+head(db.pp)
+tail(db.pp)
+dim(db.pp)
+
+
+# union de db's
+
+db.todos <- rbind(db.tmin)#, db.tmax)#, db.pp)
 
 head(db.todos)
 tail(db.todos)
-
-table(db.todos$archivo.con.datos.climaticos)
-table(db.todos$anho)
-dim(db.todos)
+table(db.todos$variable)
 
 # fin ---
 
@@ -109,7 +120,7 @@ variables <- read.table("variables.txt", sep = ",", header = TRUE)
 variables$missing_code <- NaN
 
 variables1 <- variables
-id <- which(variables1$variable_id%in%variable.de.interes)
+id <- which(variables1$variable_id%in%unique(db.todos$variable))
 
 variables2 <- variables1[id,]
 variables2
@@ -124,66 +135,24 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/
 variable.i <- read.table("tmin.txt", sep = ",", header = TRUE)
 head(variable.i)
 
-head(db.todos)
-anho.mes <- gsub('-', '', db.todos$Date) ; head(anho.mes)
-anho.mes.dia <- paste(anho.mes, '01', sep = '') ; anho.mes.dia
 
-db.todos$YYYYMMDD <- anho.mes.dia
-head(db.todos)
+matriz.tmin <- generador_de_matriz(db.tmin) ; head(matriz.tmin)
+# matriz.tmax <- generador_de_matriz(db.tmax) ; head(matriz.tmax)
+# matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp)
 
-db.todos.valores <- db.todos[, c("YYYYMMDD", "archivo.con.coordenadas", "valor.observado")]
-head(db.todos.valores)
-
-nombre.archivos.i <- unique( as.character(db.todos.valores$archivo.con.coordenadas) )
-
-for (i in 1:length(nombre.archivos.i)) {
-  # i <- 2
-  db.todos.valores.i <- subset(db.todos.valores, archivo.con.coordenadas==nombre.archivos.i[i])
-  db.todos.valores.i2 <- db.todos.valores.i[, c("YYYYMMDD", "valor.observado")]
-  colnames(db.todos.valores.i2)[2] <- nombre.archivos.i[i]
-  db.todos.valores.i2
-  
-  if(i==1){matriz.de.valores.por.estacion0 <- db.todos.valores.i2
-  } else(matriz.de.valores.por.estacion0 <- merge(matriz.de.valores.por.estacion0, db.todos.valores.i2, by='YYYYMMDD', all=TRUE))
-  
-}
-
-matriz.de.valores.por.estacion <- matriz.de.valores.por.estacion0
-
-for (j in 2:ncol(matriz.de.valores.por.estacion0)) {
-  matriz.de.valores.por.estacion[,j][matriz.de.valores.por.estacion[,j]%in%NA] <- NaN
-}
-
-matriz.de.valores.por.estacion
-
-##
-# Hay que darle este formato!!
-
-# YYYYMMDD, estacion_1, estacion_2, estacion_3 
-# 20100101, valor,      valor,      valor
-# 20100201, valor,      valor,      valor
-# 20100301, valor,      valor,      valor
-
-##
-
-# ---
-
-# fecha.i <- unique(db.todos.valores$YYYYMMDD)[1]
-# id <- which(db.todos.valores$YYYYMMDD%in%fecha.i)
-# db.todos.valores.i <- db.todos.valores[id, c("archivo.con.coordenadas", "valor.observado")]
-# db.todos.valores.i$archivo.con.coordenadas <- as.character(db.todos.valores.i$archivo.con.coordenadas)
-# str(db.todos.valores.i)
-
-# db.todos.valores.i.2 <- t( db.todos.valores.i[, "valor.observado"] )
-# colnames(db.todos.valores.i.2) <- db.todos.valores.i$archivo.con.coordenadas
-# db.todos.valores.i.2
-
-
-# ---
+# save
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
-# write.table(matriz.de.valores.por.estacion0, file='tmin.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+
+# write.table(matriz.tmin, file='tmin.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
+# 
+# write.table(matriz.tmax, file='tmax.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+#             append=FALSE, quote=FALSE, na = 'NaN')
+# 
+# write.table(matriz.pp, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+#             append=FALSE, quote=FALSE, na = 'NaN')
+
 
 # fin ---
 

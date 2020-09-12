@@ -3,22 +3,22 @@ library(stringr)
 anhadiendo_coordenadas <- function(base_de_datos, nombre_del_archivo, variable = 'pp'){
   
   # base_de_datos <- db2.i
-  # nombre_del_archivo <- archivos.i[i]
+  # nombre_del_archivo <- lista_de_archivos[i]
   # variable <- variable.de.interes
 
   message('Iniciando')
   
-  fecha.segregada <- unlist(str_extract_all(base_de_datos$Date, "[0-9]+"))
-  fecha.segregada.numerica <- as.numeric(fecha.segregada)
-  
-  meses.de.la.db <- fecha.segregada.numerica[fecha.segregada.numerica <= 12]
-  anhos.de.la.db <- fecha.segregada.numerica[fecha.segregada.numerica > 12]
+  # fecha.segregada <- unlist(str_extract_all(base_de_datos$Date, "[0-9]+"))
+  # fecha.segregada.numerica <- as.numeric(fecha.segregada)
+  # 
+  # meses.de.la.db <- fecha.segregada.numerica[fecha.segregada.numerica <= 12]
+  # anhos.de.la.db <- fecha.segregada.numerica[fecha.segregada.numerica > 12]
   
   base_de_datos_nueva <- base_de_datos
   colnames(base_de_datos_nueva)[2] <- 'valor.observado'
   base_de_datos_nueva$valor.observado <- as.numeric(base_de_datos_nueva$valor.observado)
-  base_de_datos_nueva$anho <- anhos.de.la.db
-  base_de_datos_nueva$mes <- meses.de.la.db
+  # base_de_datos_nueva$anho <- anhos.de.la.db
+  # base_de_datos_nueva$mes <- meses.de.la.db
   
   nombre.estaciones.a.evaluar <- nombre_estacion(db.estaciones$names_modi)
   nombre.estacion.referencia <- nombre_estacion(nombre_del_archivo)

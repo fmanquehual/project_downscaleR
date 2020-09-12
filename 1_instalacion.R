@@ -21,9 +21,10 @@ Sys.getenv("JAVA_HOME")
 
 library(devtools)
 
-install_github(c('SantanderMetGroup/climate4R.UDG@devel', 'SantanderMetGroup/loadeR'))
-install_github('SantanderMetGroup/loadeR.2nc')
-install_github("SantanderMetGroup/loadeR.java", force = TRUE)
+# install_github(c('SantanderMetGroup/climate4R.UDG@devel', 'SantanderMetGroup/loadeR'))
+# install_github('SantanderMetGroup/loadeR.2nc')
+# install_github("SantanderMetGroup/loadeR.java", force = TRUE)
+install_github('SantanderMetGroup/climate4R.climdex')
 
 install_github(c("SantanderMetGroup/loadeR.java",
                  "SantanderMetGroup/climate4R.UDG@devel",
@@ -38,15 +39,12 @@ install_github("SantanderMetGroup/visualizeR")
 install_github("SantanderMetGroup/downscaleR")
 
 # library(installr)
-# uninstall.packages(c("visualizeR",
-#   "transformeR",
-#   "loadeR-devel",
-#   "downscaleR",
-#                      'loadeR.2nc',
-#   "loadeR",
-#                      "loadeR.java",
-#                      
-#                      "climate4R.UDG"))
+# uninstall.packages(c('loadeR.java',
+#                      'climate4R.UDG',
+#                      "loadeR",
+#                      'transformeR',
+#                      'visualizeR',
+#                      'downscaleR'))
 
 # install_github(c(
 #                  

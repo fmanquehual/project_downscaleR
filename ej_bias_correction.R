@@ -6,12 +6,6 @@ library(loadeR)
 library(visualizeR)
 library(downscaleR)
 library(ncdf4)
-# library(devtools)
-
-# install_github(c(#"SantanderMetGroup/loadeR",
-#                  #"SantanderMetGroup/transformeR",
-#                  "SantanderMetGroup/visualizeR",
-#                  "SantanderMetGroup/downscaleR"))
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CR2/')
 
@@ -23,7 +17,7 @@ anhos <- 2010:2011
 # latitud <- c(-49, -36)
 # longitud <- c(-75, -71)
 
-latitud <- c(-46, -48)
+latitud <- c(-48, -46)
 longitud <- c(-74, -71)
 
 # fin ---
@@ -44,7 +38,7 @@ ej
 C4R.vocabulary()
 tmin.mean <- loadGridData(dataset = tmin, 
                           var = "tmin",
-                          aggr.m = "mean",
+                          # aggr.m = "mean",
                           lonLim = longitud,
                           latLim= latitud, 
                           season= meses, 

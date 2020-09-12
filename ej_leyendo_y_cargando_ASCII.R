@@ -42,11 +42,16 @@ dir()
 
 read.table("stations.txt", sep = ",", header = TRUE)
 read.table("variables.txt", sep = ",", header = TRUE)
-read.table("tmin.txt", sep = ",", header = TRUE)
+ej1 <- read.table("tmin.txt", sep = ",", header = TRUE)
+ej2 <- read.table("tmax.txt", sep = ",", header = TRUE)
+ej3 <- read.table("precip.txt", sep = ",", header = TRUE)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
-read.table("tmin.txt", sep = ",", header = TRUE)
 
+read.table("variables.txt", sep = ",", header = TRUE)
+ej4 <- read.table("tmin.txt", sep = ",", header = TRUE)
+ej5 <- read.table("tmax.txt", sep = ",", header = TRUE)
+ej6 <- read.table("precip.txt", sep = ",", header = TRUE)
 
 # fin ---
 
