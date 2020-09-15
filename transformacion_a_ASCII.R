@@ -31,7 +31,6 @@ tail(db.estaciones)
 
 anhos.interes <- 2008:2017
 
-
 # tmin
 variable.de.interes <- 'tmin'
 
@@ -77,7 +76,7 @@ dim(db.pp)
 
 # union de db's
 
-db.todos <- rbind(db.tmin)#, db.tmax)#, db.pp)
+db.todos <- rbind(db.pp)#, db.tmax)#, db.pp)
 
 head(db.todos)
 tail(db.todos)
@@ -136,9 +135,9 @@ variable.i <- read.table("tmin.txt", sep = ",", header = TRUE)
 head(variable.i)
 
 
-matriz.tmin <- generador_de_matriz(db.tmin) ; head(matriz.tmin)
+# matriz.tmin <- generador_de_matriz(db.tmin) ; head(matriz.tmin)
 # matriz.tmax <- generador_de_matriz(db.tmax) ; head(matriz.tmax)
-# matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp)
+matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp)
 
 # save
 

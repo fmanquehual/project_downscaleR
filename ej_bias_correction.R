@@ -32,8 +32,8 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_CR2/')
 # Lectura de datos
 tmin <- 'CR2MET_tmin_v2.0_mon_1979_2018_005deg.nc'
 
-ej <- nc_open(tmin)
-ej
+# ej <- nc_open(tmin)
+# ej
 
 C4R.vocabulary()
 tmin.mean <- loadGridData(dataset = tmin, 
