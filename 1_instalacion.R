@@ -43,13 +43,13 @@ install_github("SantanderMetGroup/downscaleR")
 
 # herramientas extra:
 
-devtools::install_github("SantanderMetGroup/drought4R@v0.1.0",
+devtools::install_github(#"SantanderMetGroup/drought4R@v0.1.0",
                          "SantanderMetGroup/convertR@v0.1.2") # convert, para convertir Kelvin a Celcius
 
 # fuente: http://www.meteo.unican.es/work/climate4r/drought4R/drought4R_notebook.html
 
 # library(installr)
-# uninstall.packages('fields')
+# uninstall.packages('glue')
 # 
 # uninstall.packages(c('loadeR.java',
 #                      'climate4R.UDG',
