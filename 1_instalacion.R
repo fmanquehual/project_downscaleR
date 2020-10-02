@@ -12,7 +12,7 @@
 
 library(rJava)
 
-Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk1.8.0_261")  #Windows
+Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk1.8.0_261/")  #Windows
 Sys.getenv("JAVA_HOME")
 
 
@@ -21,43 +21,43 @@ Sys.getenv("JAVA_HOME")
 
 library(devtools)
 
-# install_github(c('SantanderMetGroup/climate4R.UDG@devel', 'SantanderMetGroup/loadeR'))
-# install_github('SantanderMetGroup/loadeR.2nc')
-# install_github("SantanderMetGroup/loadeR.java", force = TRUE)
-install_github('SantanderMetGroup/climate4R.datasets')
-install_github('SantanderMetGroup/climate4R.climdex')
-install_github('SantanderMetGroup/VALUE')
-install_github('SantanderMetGroup/climate4R.value')
-
 install_github(c("SantanderMetGroup/loadeR.java",
                  "SantanderMetGroup/climate4R.UDG@devel",
+                 #"SantanderMetGroup/climate4R.UDG",
                  "SantanderMetGroup/loadeR",
                  "SantanderMetGroup/transformeR",
                  "SantanderMetGroup/visualizeR",
                  "SantanderMetGroup/downscaleR"))
 
 # si tienes problemas con 'rlang', 'ellipsis', 'fansi', instalalo manualmente y vuelve a instalar visualizeR
-install_github("SantanderMetGroup/visualizeR")
+# install_github("SantanderMetGroup/visualizeR")
+# install_github("SantanderMetGroup/downscaleR")
 
-install_github("SantanderMetGroup/downscaleR")
-
-# herramientas extra:
-
-devtools::install_github(#"SantanderMetGroup/drought4R@v0.1.0",
+install_github('SantanderMetGroup/climate4R.datasets')
+install_github('SantanderMetGroup/climate4R.climdex')
+install_github('SantanderMetGroup/VALUE')
+install_github('SantanderMetGroup/climate4R.value')
+install_github(#"SantanderMetGroup/drought4R@v0.1.0",
                          "SantanderMetGroup/convertR@v0.1.2") # convert, para convertir Kelvin a Celcius
 
 # fuente: http://www.meteo.unican.es/work/climate4r/drought4R/drought4R_notebook.html
 
-# library(installr)
+library(installr)
 # uninstall.packages('glue')
 # 
-# uninstall.packages(c('loadeR.java',
-#                      'climate4R.UDG',
+# uninstall.packages(c(
+#                      'VALUE',
 #                      "loadeR",
-#                      'transformeR',
+#                      'loadeR.java',
+#                      'climate4R.UDG',
+#                      'convertR',
+#                      'climate4R.value',
+#                      'downscaleR',
 #                      'visualizeR',
-#                      'downscaleR'))
-
+#                      'climate4R.datasets',
+#                      'climate4R.climdex',
+#                      'transformeR'))
+# 
 # install_github(c(
 #                  
 #                  "SantanderMetGroup/transformeR",

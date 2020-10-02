@@ -13,13 +13,13 @@ source('funcion_nombre_estacion.R')
 union_db_valores_observados_y_coordenadas <- function(lista_de_archivos, variable_de_interes, directorio_de_trabajo){
   
   # variable_de_interes <- variable.de.interes
-  # lista_de_archivos <- archivos.pp
+  # lista_de_archivos <- archivos.rh
   # directorio_de_trabajo <- directorio.de.trabajo
   
   db.todos <- c()
   
   for (i in 1:length(lista_de_archivos)) {
-    # i <- 6
+    # i <- 1
     
     setwd(directorio_de_trabajo)
     # Lectura de archivos

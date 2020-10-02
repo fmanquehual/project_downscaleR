@@ -2,8 +2,8 @@ library(stringi)
 
 coincidencia_entre_nombres_de_archivos <- function(nombre_archivo_de_referencia, nombre_de_archivo_a_evaluar){
   
-  # nombre_archivo_de_referencia <- nombre2
-  # nombre_de_archivo_a_evaluar <- nombre1.i
+  # nombre_archivo_de_referencia <- ej
+  # nombre_de_archivo_a_evaluar <- ej2
   
   if(stri_detect_fixed(nombre_de_archivo_a_evaluar, 'DGA') | stri_detect_fixed(nombre_de_archivo_a_evaluar, 'DG')){institucion <- 'DG'}
   if(stri_detect_fixed(nombre_de_archivo_a_evaluar, 'DMC')){institucion <- 'DMC'}

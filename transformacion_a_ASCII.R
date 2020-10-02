@@ -1,6 +1,7 @@
 library(PerformanceAnalytics)
 library(rgdal)
 library(raster)
+# library(meteoland) # interpolacion temporal y espacial
 
 rm(list=ls())
 dev.off()
@@ -11,7 +12,10 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR')
 source('funcion_anhadiendo_altitud.R')
 source('funcion_localizacion_directorio_de_trabajo.R')
 source('funcion_generador_de_matriz.R')
+source('funcion_db_a_matriz.R')
+source('funcion_identificador_de_nombres_similares.R')
 source('funcion_union_db_valores_observados_y_coordenadas.R')
+
 
 # fin ---
 
@@ -29,7 +33,7 @@ tail(db.estaciones)
 
 # Preparacion de db ----
 
-anhos.interes <- 2008:2017
+anhos.interes <- 2010:2011
 
 # tmin
 variable.de.interes <- 'tmin'
@@ -74,9 +78,24 @@ tail(db.pp)
 dim(db.pp)
 
 
+# hr
+variable.de.interes <- 'rh'
+
+directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
+setwd(directorio.de.trabajo)
+archivos.rh <- list.files()
+  
+db.rh <- union_db_valores_observados_y_coordenadas(archivos.rh, variable.de.interes, directorio.de.trabajo)
+db.rh$variable <- 'relativeHumidity'
+
+head(db.rh)
+tail(db.rh)
+dim(db.rh)
+
+
 # union de db's
 
-db.todos <- rbind(db.pp)#, db.tmax)#, db.pp)
+db.todos <- rbind(db.pp, db.tmin, db.tmax, db.pp, db.rh)
 
 head(db.todos)
 tail(db.todos)
@@ -152,6 +171,78 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 # write.table(matriz.pp, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
 
+  
+# fin ---
+
+
+
+
+# Interpolacion de datos ----
+
+# NO FUNCIONO PQ LOS RESULTADOS NO TIENE SENTIDO! LO QUE QUEDA ES DESCARGAR DATOS DIARIOS
+
+# fuente: https://cran.r-project.org/web/packages/meteoland/vignettes/UserGuide.html
+
+nombres.estaciones.compartidas.temperatura <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = db.pp$archivo.con.datos.climaticos,
+                                                                                   vector_con_nombres_a_evaluar = db.tmin$archivo.con.datos.climaticos,
+                                                                                   porcentaje_de_aciertos = 75,
+                                                                                   es_precipitacion = FALSE)
+nombres.estaciones.compartidas.temperatura
+
+nombres.estaciones.compartidas.precipitacion <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = db.pp$archivo.con.datos.climaticos,
+                                                              vector_con_nombres_a_evaluar = db.tmin$archivo.con.datos.climaticos,
+                                                              porcentaje_de_aciertos = 75,
+                                                              es_precipitacion = TRUE)
+nombres.estaciones.compartidas.precipitacion
+
+# estaciones.compartidas3 <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = estaciones.compartidas2,
+#                                                               vector_con_nombres_a_evaluar = db.rh$archivo.con.datos.climaticos,
+#                                                               porcentaje_de_aciertos = 75)
+# estaciones.compartidas3
+
+estaciones.db.todos$source <- as.character(estaciones.db.todos$source)
+estaciones.compartidas.temperatura <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.temperatura,]
+estaciones.compartidas.precipitacion <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.precipitacion,]
+
+
+# esto comenzo por el desfaz temporal de los datos. Estaciones metereologicas estan cada 5 dias y las grillas estan diarias. La idea es interpolar...
+# los datos de las estaciones en forma diaria
+
+
+estaciones.db.todos.filtrado0 <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.temperatura|
+                                                    estaciones.db.todos$source%in%nombres.estaciones.compartidas.precipitacion,]
+estaciones.db.todos.filtrado0$lon_lat <- paste(estaciones.db.todos.filtrado0$longitude, estaciones.db.todos.filtrado0$latitude, sep = '_')
+estaciones.db.todos.filtrado <- estaciones.db.todos.filtrado0[!duplicated(estaciones.db.todos.filtrado0$lon_lat),]
+
+estaciones.temperatura <- SpatialPoints(estaciones.db.todos.filtrado[,c("longitude", "latitude")],
+                                        proj4string = CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'))
+plot(estaciones.temperatura, axes=TRUE)
+
+
+db.tmin.filtrado <- db.tmin[db.tmin$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
+db.tmax.filtrado <- db.tmax[db.tmax$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
+db.pp.filtrado <- db.pp[db.pp$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.precipitacion,]
+# db.rh.filtrado <- db.rh[db.rh$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
+
+matriz.tmin2 <- db_a_matriz(generador_de_matriz(db.tmin.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.tmin2[, 1:6]
+matriz.tmax2 <- db_a_matriz(generador_de_matriz(db.tmax.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.tmax2[, 1:6]
+matriz.pp2 <- db_a_matriz(generador_de_matriz(db.pp.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.pp2[, 1:6]
+# matriz.rh2 <- db_a_matriz(generador_de_matriz(db.rh.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.rh2[, 1:6]
+
+# estaciones.db.todos.filtrado <- estaciones.db.todos.filtrado[-nrow(estaciones.db.todos.filtrado),]
+interpolator <- MeteorologyInterpolationData(estaciones.temperatura, elevation = estaciones.db.todos.filtrado$altitude,
+                                             MinTemperature = matriz.tmin2,
+                                             MaxTemperature = matriz.tmax2,
+                                             Precipitation = matriz.pp2)#,
+                                             #RelativeHumidity = matriz.rh2)
+class(interpolator)
+
+temporal_coverage <- interpolation.coverage(interpolator, type = 'temporal')
+head(temporal_coverage)
+
+spatial_coverage <- interpolation.coverage(interpolator, type = 'spatial')
+plot(spatial_coverage, axes=TRUE)
+spatial_coverageQ@data
 
 # fin ---
 

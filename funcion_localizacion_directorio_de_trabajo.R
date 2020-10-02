@@ -2,7 +2,7 @@ library(stringi)
 
 localizacion_directorio_de_trabajo <- function(variable_de_interes){
   
-  # variable_de_interes <- 'pp'
+  # variable_de_interes <- 'rh'
   
   carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/'
   setwd(carpeta.madre)
@@ -11,8 +11,9 @@ localizacion_directorio_de_trabajo <- function(variable_de_interes){
   carpetas2 <- gsub('ParaTaylor', '', carpetas1)
   
   if(variable_de_interes == 'pp'){
-    variable.de.interes.modificada <- 'Rain'} else(
-    variable.de.interes.modificada <- gsub('t', 'T', variable_de_interes))
+    variable.de.interes.modificada <- 'Rain'
+      } else if(variable_de_interes == 'rh' | variable_de_interes == 'hr') {variable.de.interes.modificada <- 'RH'
+        } else(variable.de.interes.modificada <- gsub('t', 'T', variable_de_interes))
   
   match <- stri_detect_fixed(carpetas2, variable.de.interes.modificada)
   carpeta.de.interes <- carpetas1[match]

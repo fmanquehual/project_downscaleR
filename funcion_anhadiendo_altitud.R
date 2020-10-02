@@ -1,8 +1,11 @@
+library(raster)
+
 anhadiendo_altitud <- function(data_base, sistema_de_coordenadas='wgs84'){
 
-  data_base <- estaciones.db.todos
-  sistema_de_coordenadas <- 'wgs84'
+  # data_base <- db4
+  # sistema_de_coordenadas <- 'wgs84'
   
+  directorio.original <- getwd()
   wgs84 <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
   utm18 <- "+proj=utm +zone=18 +south +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
   utm19 <- "+proj=utm +zone=19 +south +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"
@@ -22,6 +25,8 @@ anhadiendo_altitud <- function(data_base, sistema_de_coordenadas='wgs84'){
   dem.area.de.estudio <- raster('clip_dem_sudamerica.tif')
   data_base$altitude <- as.character(data_base$altitude)
   data_base$altitude <- extract(dem.area.de.estudio, estaciones.shp)
+  
+  setwd(directorio.original)
   
   return(data_base)
 
