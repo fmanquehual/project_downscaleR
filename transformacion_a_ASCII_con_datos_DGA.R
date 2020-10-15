@@ -13,7 +13,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados
 lista.de.archivos <- list.files() ; lista.de.archivos
 variable <- 'precip' # precip # tmean # tmin # tmax
 
-matriz <- generador_de_matriz_archivos_DGA(lista.de.archivos)
+matriz <- generador_de_matriz_archivos_DGA(lista.de.archivos, entregar_db_depurada = FALSE)
 head(matriz)
 
 # save
@@ -26,7 +26,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 # write.table(matriz.tmax, file='tmax.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
 # 
-write.table(matriz, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+write.table(matriz, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=",",
             append=FALSE, quote=FALSE, na = 'NaN')
 
 

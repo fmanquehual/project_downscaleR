@@ -1,6 +1,7 @@
 library(stringi)
 
-generador_de_matriz_archivos_DGA <- function(lista_de_archivos, separador_de_columna=';', decimal='.'){
+generador_de_matriz_archivos_DGA <- function(lista_de_archivos, entregar_db_depurada=FALSE,
+                                             separador_de_columna=';', decimal='.'){
   
   # lista_de_archivos <- lista.de.archivos
   
@@ -30,6 +31,8 @@ generador_de_matriz_archivos_DGA <- function(lista_de_archivos, separador_de_col
     
     if(length(filas.a.eliminar)==0){db3 <- db2} else(
        db3 <- db2[-filas.a.eliminar,])
+    
+    data_base_depurada <- db3
     
     # fin ---
     
@@ -107,5 +110,5 @@ generador_de_matriz_archivos_DGA <- function(lista_de_archivos, separador_de_col
     
   }
   
-  return(matriz)
+  if(entregar_db_depurada==FALSE){return(matriz)} else(return(data_base_depurada))
 }

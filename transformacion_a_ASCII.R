@@ -95,7 +95,7 @@ dim(db.rh)
 
 # union de db's
 
-db.todos <- rbind(db.pp, db.tmin, db.tmax, db.pp, db.rh)
+db.todos <- rbind(db.pp)#, db.tmin, db.tmax, db.pp, db.rh)
 
 head(db.todos)
 tail(db.todos)
@@ -179,7 +179,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 
 # Interpolacion de datos ----
 
-# NO FUNCIONO PQ LOS RESULTADOS NO TIENE SENTIDO! LO QUE QUEDA ES DESCARGAR DATOS DIARIOS
+# NO FUNCIONO, LOS RESULTADOS NO TIENEN SENTIDO! LO QUE QUEDA ES DESCARGAR DATOS DIARIOS
 
 # fuente: https://cran.r-project.org/web/packages/meteoland/vignettes/UserGuide.html
 

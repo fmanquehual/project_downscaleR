@@ -70,13 +70,14 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 nombre.carpeta <- 'datos_transformados_a_ASCII'
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
-stationInfo(nombre.carpeta)
+estaciones <- stationInfo(nombre.carpeta) ; estaciones
 
 y <- loadStationData(dataset = nombre.carpeta, 
                      var="precip", 
+                     #stationID = estaciones$stationID[1],
                      years = anhos,
-                     season = meses,
-                     tz='GMT')
+                     season = meses)#,
+                     #tz='America/Santiago')
 
 temporalPlot(y, aggr.spatial = list(FUN = sum, na.rm = TRUE))
 
@@ -88,11 +89,11 @@ temporalPlot(y, aggr.spatial = list(FUN = sum, na.rm = TRUE))
 # temporalPlot(y, aggr.spatial = list(FUN = sum, na.rm = TRUE))
 
 # Series de tiempo por estacion
-time <- as.POSIXlt(y$Dates$start)
-
-plot(time, y$Data[,1], ty = 'l', col = "black", xlab = "time", ylab = "Pp (mm)")
-lines(time, y$Data[,2], ty = 'l', col = "red", lty=2)
-legend("topright", c("Bahia Murta", "Caleta Tortel"), col = c("black", "red"), lty = c(1,2))
+# time <- as.POSIXlt(y$Dates$start)
+# 
+# plot(time, y$Data[,1], ty = 'l', col = "black", xlab = "time", ylab = "Pp (mm)")
+# lines(time, y$Data[,2], ty = 'l', col = "red", lty=2)
+# legend("topright", c("Bahia Murta", "Caleta Tortel"), col = c("black", "red"), lty = c(1,2))
 
 
 # Predictors (ERA reanalisis) 
