@@ -10,13 +10,29 @@ source('funcion_nombre_estacion.R')
 
 # Matriz de valores ----
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/dga/')
+
 lista.de.archivos <- list.files() ; lista.de.archivos
 variable <- 'precip' # precip # tmean # tmin # tmax
 
 matriz <- generador_de_matriz_archivos_DGA(lista.de.archivos, entregar_db_depurada = FALSE)
 head(matriz)
 
-# save
+db.estaciones.y.codificacion <- generador_de_matriz_archivos_DGA(lista.de.archivos,
+                                                                 entregar_db_nombre_estacion_y_codificacion = TRUE)
+db.estaciones.y.codificacion
+
+# fin ---
+
+ 
+# install.packages("remotes")
+# remotes::install_version("SDMTools", "1.1-221")
+# library(SDMTools)
+# ej <- as.matrix(matriz)
+# ej2 <- as.asc(ej)
+# plot(ej2)
+
+
+# save ----
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 
@@ -26,7 +42,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 # write.table(matriz.tmax, file='tmax.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
 # 
-write.table(matriz, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=",",
+write.table(matriz, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
             append=FALSE, quote=FALSE, na = 'NaN')
 
 
@@ -69,10 +85,11 @@ estaciones <- read.table("stations.txt", sep = ",", header = TRUE)
 head(estaciones)
 head(db.estaciones)
 
-estaciones.db.todos <- data.frame(station_id = lista.de.archivos, name = lista.de.archivos,
-                                   longitude = estaciones.lista.de.archivos$lon, latitude = estaciones.lista.de.archivos$lat,
-                                   altitude = NaN, source = 'DGA')
-estaciones.db.todos
+estaciones.db.todos0 <- data.frame(name = lista.de.archivos, longitude = estaciones.lista.de.archivos$lon, 
+                                  latitude = estaciones.lista.de.archivos$lat, altitude = NaN, source = 'DGA')
+
+estaciones.db.todos1 <- merge(estaciones.db.todos0, db.estaciones.y.codificacion, by.x='name', by.y='nombre_estacion')
+estaciones.db.todos <- estaciones.db.todos1[,c("station_id", "name", "longitude", "latitude", "altitude", "source")]
 
 estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84')
 head(estaciones.db.todos)

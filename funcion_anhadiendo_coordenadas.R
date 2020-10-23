@@ -6,7 +6,8 @@ anhadiendo_coordenadas <- function(base_de_datos, nombre_del_archivo, variable =
   # nombre_del_archivo <- lista_de_archivos[i]
   # variable <- variable.de.interes
 
-  message('Iniciando')
+  mensaje_de_inicio <- paste0('Iniciando proceso con ', nombre_del_archivo)
+  message(mensaje_de_inicio)
   
   # fecha.segregada <- unlist(str_extract_all(base_de_datos$Date, "[0-9]+"))
   # fecha.segregada.numerica <- as.numeric(fecha.segregada)
@@ -19,9 +20,11 @@ anhadiendo_coordenadas <- function(base_de_datos, nombre_del_archivo, variable =
   base_de_datos_nueva$valor.observado <- as.numeric(base_de_datos_nueva$valor.observado)
   # base_de_datos_nueva$anho <- anhos.de.la.db
   # base_de_datos_nueva$mes <- meses.de.la.db
+  nombre_del_archivo2 <- depurador_nombre_archivos_csv(nombre_del_archivo) # activar si la carpeta es 'DatosAysen_Baker'
+  nombre_del_archivo3 <- stri_replace_all_fixed(nombre_del_archivo2, 'ñ', 'n') # activar si la carpeta es 'DatosAysen_Baker'
   
   nombre.estaciones.a.evaluar <- nombre_estacion(db.estaciones$names_modi)
-  nombre.estacion.referencia <- nombre_estacion(nombre_del_archivo)
+  nombre.estacion.referencia <- nombre_estacion(nombre_del_archivo3)
   
   nombre.archivo.con.coordenadas <- identificador_de_archivo(nombre.estacion.referencia, nombre.estaciones.a.evaluar)
   

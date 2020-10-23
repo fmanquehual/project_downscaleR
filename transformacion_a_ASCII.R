@@ -14,6 +14,7 @@ source('funcion_localizacion_directorio_de_trabajo.R')
 source('funcion_generador_de_matriz.R')
 source('funcion_db_a_matriz.R')
 source('funcion_identificador_de_nombres_similares.R')
+source('funcion_depurador_nombre_archivos_csv.R')
 source('funcion_union_db_valores_observados_y_coordenadas.R')
 
 
@@ -33,14 +34,16 @@ tail(db.estaciones)
 
 # Preparacion de db ----
 
-anhos.interes <- 2010:2011
+anhos.interes <- 1970:2018
 
 # tmin
+# carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/'
+carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/DatosAysen_Baker/'
 variable.de.interes <- 'tmin'
 
-directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
-setwd(directorio.de.trabajo)
+localizacion_directorio_de_trabajo(carpeta.madre)
 archivos.tmin <- list.files()
+directorio.de.trabajo <- getwd()
 
 db.tmin <- union_db_valores_observados_y_coordenadas(archivos.tmin, variable.de.interes, directorio.de.trabajo)
 
@@ -50,11 +53,12 @@ dim(db.tmin)
 
 
 # tmax
+carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/DatosAysen_Baker/'
 variable.de.interes <- 'tmax'
 
-directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
-setwd(directorio.de.trabajo)
+localizacion_directorio_de_trabajo(carpeta.madre)
 archivos.tmax <- list.files()
+directorio.de.trabajo <- getwd()
 
 db.tmax <- union_db_valores_observados_y_coordenadas(archivos.tmax, variable.de.interes, directorio.de.trabajo)
 
@@ -64,14 +68,19 @@ dim(db.tmax)
 
 
 # pp
+carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/DatosAysen_Baker/'
 variable.de.interes <- 'pp'
 
-directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
-setwd(directorio.de.trabajo)
+localizacion_directorio_de_trabajo(carpeta.madre)
 archivos.pp <- list.files()
+directorio.de.trabajo <- getwd()
 
 db.pp <- union_db_valores_observados_y_coordenadas(archivos.pp, variable.de.interes, directorio.de.trabajo)
 db.pp$variable <- 'precip'
+
+unique(db.pp$archivo.con.coordenadas)
+estaciones.de.interes <- c('Rio.Nef.Antes.Junta.Estero.el.Revalse_DGA')
+db.pp <- db.pp[db.pp$archivo.con.coordenadas%in%estaciones.de.interes,]
 
 head(db.pp)
 tail(db.pp)
@@ -79,11 +88,12 @@ dim(db.pp)
 
 
 # hr
+carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/DatosAysen_Baker/'
 variable.de.interes <- 'rh'
 
-directorio.de.trabajo <- localizacion_directorio_de_trabajo(variable.de.interes)
-setwd(directorio.de.trabajo)
+localizacion_directorio_de_trabajo(carpeta.madre)
 archivos.rh <- list.files()
+directorio.de.trabajo <- getwd()
   
 db.rh <- union_db_valores_observados_y_coordenadas(archivos.rh, variable.de.interes, directorio.de.trabajo)
 db.rh$variable <- 'relativeHumidity'
@@ -130,8 +140,6 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 #             append=FALSE, quote=FALSE, na = 'NaN')
 
 
-
-
 # informacion de variables
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/')
 variables <- read.table("variables.txt", sep = ",", header = TRUE)
@@ -146,6 +154,7 @@ variables2
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 # write.table(variables2, file='variables.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
+
 
 
 # variable
@@ -168,9 +177,8 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transforma
 # write.table(matriz.tmax, file='tmax.txt', row.names=FALSE, col.names=TRUE, sep=", ",
 #             append=FALSE, quote=FALSE, na = 'NaN')
 # 
-# write.table(matriz.pp, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE, na = 'NaN')
-
+write.table(matriz.pp, file='precip.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+            append=FALSE, quote=FALSE, na = 'NaN')
   
 # fin ---
 

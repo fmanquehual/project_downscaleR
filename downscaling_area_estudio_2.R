@@ -12,23 +12,24 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 source('funcion_identificador_de_variables_era5_CEDA.R')
 source('funcion_identificador_de_fechas.R')
 source('funcion_reemplazador_de_fechas_NA.R')
-source('funcion_fillGridDates_modificado.R')
-source('funcion_biasCorrection_modificado.R')
-source('funcion_biasCorrectionXD.R')
-source('funcion_biasCorrection1D.R')
 source('funcion_calculo_de_resolucion.R')
-
 
 # Filtro de datos ----
 
-meses <- 1:12
-anhos <- 2010:2011
+# HAY PROBLEMAS CON EL MES 10, 11 Y 12!
+# EL PROBLEMA SE MANTIENE SI OCUPO DE 1:9 PARA 2010:2011
+
+# UNA ALTERNATIVA ES APLICAR (PERO PRIMERO PROBAR!) EL BIASCORRECTION DE MANERA MENSUAL ...
+# Y HACER QUE LOS MESES 10:12 LOS HAGA PASAR POR LOS PRIMEROS MESES
+
+meses <- 1 # con el año 2010, del 1 al 9no mes, corre bien todo
+anhos <- 2011:2017#1979:2018 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
 # latitud <- c(-49,-36) # area de estudio CCR
 # longitud <- c(-75, -72) # area de estudio CCR
 # latitud <- c(-48, -46) # area de estudio WRF
 # longitud <- c(-74, -71) # area de estudio WRF
-latitud <- c(-48, -44.5)
-longitud <- c(-74, -70.5)
+latitud <- c(-47.3, -47)
+longitud <- c(-73.3, -73)
 
 # fin ---
 
@@ -72,66 +73,62 @@ nombre.carpeta <- 'datos_transformados_a_ASCII'
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 estaciones <- stationInfo(nombre.carpeta) ; estaciones
 
-y <- loadStationData(dataset = nombre.carpeta, 
+estaciones <- loadStationData(dataset = nombre.carpeta, 
                      var="precip", 
+                     units = 'mm',
                      #stationID = estaciones$stationID[1],
                      years = anhos,
                      season = meses)#,
-                     #tz='America/Santiago')
+                     # tz='GMT')
 
-temporalPlot(y, aggr.spatial = list(FUN = sum, na.rm = TRUE))
+temporalPlot(estaciones, aggr.spatial = list(FUN = mean, na.rm = TRUE))
 
-# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
-# ej <- read.table('precip.txt') ; ej
-# View(ej)
-# y$Dates$start
-# y <- reemplazador_de_fechas_NA(y, tz='GMT') # activar si las fechas tienen NA
+# y <- reemplazador_de_fechas_NA(y, tz=NULL) # activar si las fechas tienen NA
 # temporalPlot(y, aggr.spatial = list(FUN = sum, na.rm = TRUE))
-
-# Series de tiempo por estacion
-# time <- as.POSIXlt(y$Dates$start)
 # 
-# plot(time, y$Data[,1], ty = 'l', col = "black", xlab = "time", ylab = "Pp (mm)")
-# lines(time, y$Data[,2], ty = 'l', col = "red", lty=2)
-# legend("topright", c("Bahia Murta", "Caleta Tortel"), col = c("black", "red"), lty = c(1,2))
+# y$Dates$start <- as.POSIXct(y$Dates$start, format="%Y-%m-%d",
+#                             origin = "1970-01-01", tz = '') # as.POSIXlt(y$Dates$start, 'GMT')
+# y$Dates$end <- as.POSIXct(y$Dates$end, format="%Y-%m-%d",
+#                           origin = "1970-01-01", tz = '') # as.POSIXlt(y$Dates$end, 'GMT')
 
 
 # Predictors (ERA reanalisis) 
 
 #setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA_LAND/') # Tiene NA por el oceano, lo que genera problemas
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA5/copernicus/')
-era5 <- 'ERA5_2010_2011.nc'
+era5 <- 'ERA5_1979_2018_pp.nc'
 
 inventario.era5 <- dataInventory(era5)
+inventario.era5$tp$Dimensions$time$Date_range
 
 # Precipitacion
 # C4R.vocabulary()
-pr.sum <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE)
+pr.sum0 <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE)
+pr.sum <- udConvertGrid(pr.sum0, new.units = "mm")
 
 spatialPlot(climatology(pr.sum, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "YlGnBu",
             main = 'Precipitacion', scales = list(draw = T))
 
-
 # Temperatura
-tas.mean0 <- loadGridData_personalizado(era5, "t2m", es.precipitacion = FALSE, es.cmip6 = FALSE)
-tas.mean <- udConvertGrid(tas.mean0, new.units = "degC")
+# tas.mean0 <- loadGridData_personalizado(era5, "t2m", es.precipitacion = FALSE, es.cmip6 = FALSE)
+# tas.mean <- udConvertGrid(tas.mean0, new.units = "degC")
 
-spatialPlot(climatology(tas.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "RdYlBu",
-            rev.colors = TRUE, main = 'Temperatura', scales = list(draw = T))
+# spatialPlot(climatology(tas.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "RdYlBu",
+#             rev.colors = TRUE, main = 'Temperatura', scales = list(draw = T))
 
 
 # Velocidad de viento U
-u10.mean <- loadGridData_personalizado(era5, "u10", es.precipitacion = FALSE, es.cmip6 = FALSE)
+# u10.mean <- loadGridData_personalizado(era5, "u10", es.precipitacion = FALSE, es.cmip6 = FALSE)
 
-spatialPlot(climatology(u10.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "jet.colors",
-            main = 'u10', scales = list(draw = T))
+# spatialPlot(climatology(u10.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "jet.colors",
+#             main = 'u10', scales = list(draw = T))
 
 
 # Velocidad de viento V
-v10.mean <- loadGridData_personalizado(era5, "v10", es.precipitacion = FALSE, es.cmip6 = FALSE)
+# v10.mean <- loadGridData_personalizado(era5, "v10", es.precipitacion = FALSE, es.cmip6 = FALSE)
 
-spatialPlot(climatology(v10.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "jet.colors",
-            main = 'v10', scales = list(draw = T))
+# spatialPlot(climatology(v10.mean, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "jet.colors",
+#             main = 'v10', scales = list(draw = T))
 
 
 # # Presion superficial
@@ -154,7 +151,7 @@ spatialPlot(climatology(v10.mean, list(FUN = mean, na.rm = T)), backdrop.theme =
 
 # stack ----
 
-x <- makeMultiGrid(tas.mean, u10.mean, v10.mean, skip.temporal.check=TRUE)
+# x <- makeMultiGrid(tas.mean, u10.mean, v10.mean, skip.temporal.check=TRUE)
 
 # fin ---
 
@@ -162,29 +159,73 @@ x <- makeMultiGrid(tas.mean, u10.mean, v10.mean, skip.temporal.check=TRUE)
 
 
 # Bias correction ----
-pr.sum.bias.correction <- biasCorrection(x=pr.sum,
-                                   y = y,
-                                   precipitation = TRUE,
-                                   #window = 10,
-                                   method = "pqm")# %>% redim(drop = TRUE)
 
-# MEJOR PRUEBA CON ELIMINAR ESTACIONES
-library(abind)
-folds <- list(2010, 2011)
-pr.sum.bias.correction <- biasCorrection_modificado(pr.sum,
-                                         y = y,
-                                         newdata = NULL,
-                                         cross.val = 'kfold',
-                                         folds = folds,
-                                         precipitation = TRUE,
-                                         window = NULL,
-                                         method = "eqm",
-                                         #fitdistr.args = list(densfun = 'gamma'),
-                                         extrapolation = 'constant',
-                                         join.members = FALSE)# %>% redim(drop = TRUE)
+# pr.sum.corregido.delta <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+#                                    y = estaciones,
+#                                    precipitation = TRUE,
+#                                    method = "delta")
+
+# pr.sum.corregido.scaling <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+#                                    y = estaciones,
+#                                    precipitation = TRUE,
+#                                    method = "scaling",
+#                                    scaling.type = "multiplicative")
+
+pr.sum.corregido.eqm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+                                   y = estaciones,
+                                   precipitation = TRUE,
+                                   method = "eqm",
+                                   wet.threshold=0.01)
+
+pr.sum.corregido.pqm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+                                   y = estaciones,
+                                   precipitation = TRUE,
+                                   method = "pqm",
+                                   wet.threshold=0.01)
+
+# pr.sum.corregido5 <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+#                                    y = estaciones,
+#                                    precipitation = TRUE,
+#                                    method = "gpqm",
+#                                    wet.threshold=0.01)
+
+pr.sum.corregido.loci <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+                                    y = estaciones,
+                                    precipitation = TRUE,
+                                    method = "loci",
+                                    wet.threshold=0.01)
+
+pr.sum.corregido.ptr <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+                                    y = estaciones,
+                                    precipitation = TRUE,
+                                    method = "ptr",
+                                    wet.threshold=0.01)
+
+# pr.sum.corregido8 <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+#                                     y = estaciones,
+#                                     precipitation = TRUE,
+#                                     method = "dqm")#,
+#                                     #wet.threshold=0.01)
+
+# pr.sum.corregido9 <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+#                                     y = estaciones,
+#                                     precipitation = TRUE,
+#                                     method = "qdm",
+#                                     wet.threshold=0.01)
+            
+#pr.sum.bias.correction2 <- interpGrid(pr.sum.bias.correction, getGrid(y)) # CORDEX historical
+
+temporalPlot(estaciones, pr.sum.corregido.eqm, lwd = c(2,1), lty = c(1,2), aggr.spatial = list(FUN = mean, na.rm = TRUE))
+
+spatialPlot(climatology(pr.sum.corregido.pqm, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", 
+            main = 'Precipitacion', scales = list(draw = T))
+
+temporalPlot(pr.sum, aggr.spatial = list(FUN = mean, na.rm = TRUE))
+
+pr.sum.puntos <- grid2sp(pr.sum)
+
 
 # fin ---
-
 
 
 
@@ -193,7 +234,7 @@ pr.sum.bias.correction <- biasCorrection_modificado(pr.sum,
 
 # Configuration of method M1 en Bedia et al. (2020)
 vars <- c("t2m", "u10", "v10")#, "sp", "z")
-folds <- list(2010, 2011)
+folds <- list(2000:2010, 2011:2014)
 
 # Datos presencia/ausencia de precipitacion
 y <- binaryGrid(y, condition = "GE", # GE: greater or equal
@@ -231,6 +272,8 @@ M6.cont <- downscaleCV(x = x, y = y,
                               combined.only = TRUE))
 
 M6cv <- gridArithmetics(M6cv.bin, M6.cont, operator = "*")
+
+M6cv$Data
 
 # plot pp predicha vs observada
 
@@ -433,13 +476,13 @@ xh <- scaleGrid(xh, base = xh, ref = x,
                 spatial.frame = "gridbox",
                 time.frame = "daily")
 
-xh <- scaleGrid(xh, base = x, type = "standardize", skip.season.check = TRUE)
+# xh <- scaleGrid(xh, base = x, type = "standardize", skip.season.check = TRUE)
 
 h_analog <- prepareNewData(newdata = xh,
                            data.struc = M6.L)
 
 f_analog <- prepareNewData(newdata = xf,
-                           data.struc = M6L)
+                           data.struc = M6.L)
 
 hist_ocu_glm <- downscalePredict(newdata
                                  = h_analog,

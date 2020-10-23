@@ -1,9 +1,23 @@
 library(stringi)
 
-generador_de_matriz_archivos_DGA <- function(lista_de_archivos, entregar_db_depurada=FALSE,
+generador_de_matriz_archivos_DGA <- function(lista_de_archivos, entregar_db_depurada=FALSE, 
+                                             entregar_db_nombre_estacion_y_codificacion=FALSE,
                                              separador_de_columna=';', decimal='.'){
   
   # lista_de_archivos <- lista.de.archivos
+  
+  
+  
+  # data frame con nombres de estaciones y su codificacion ----
+  
+  longitud.de.estaciones <- 1:length(lista_de_archivos)
+  nombre.columna.l <- paste('00', longitud.de.estaciones, sep = '')
+  db.nombre.estaciones.y.codificacion <- data.frame(nombre_estacion=lista_de_archivos, station_id=nombre.columna.l)
+  
+  # fin ---
+  
+  
+  
   
   for (l in 1:length(lista_de_archivos)) {
     # l <- 1
@@ -88,8 +102,10 @@ generador_de_matriz_archivos_DGA <- function(lista_de_archivos, entregar_db_depu
         fecha.i <- paste(anho.i, mes.i, dias, sep = '')
         db4 <- data.frame(YYYYMMDD=fecha.i, obs=obs.i)
         
+        nombre.columna.l <- paste('00', l, sep = '')
+        
         if(mes.i=='01'){db5 <- db4} else(db5 <- rbind(db5, db4))
-        if(mes.i=='12'){colnames(db5)[ncol(db5)] <- nombre.archivo}
+        if(mes.i=='12'){colnames(db5)[ncol(db5)] <- nombre.columna.l}
       }
       
       data_base_lista <- rbind(data_base_lista, db5)
@@ -110,5 +126,9 @@ generador_de_matriz_archivos_DGA <- function(lista_de_archivos, entregar_db_depu
     
   }
   
-  if(entregar_db_depurada==FALSE){return(matriz)} else(return(data_base_depurada))
+  if(entregar_db_depurada==FALSE & entregar_db_nombre_estacion_y_codificacion==FALSE){ return(matriz)
+    } else if(entregar_db_depurada==TRUE & entregar_db_nombre_estacion_y_codificacion==FALSE){ return(data_base_depurada)
+      } else if(entregar_db_depurada==FALSE & entregar_db_nombre_estacion_y_codificacion==TRUE){ return(db.nombre.estaciones.y.codificacion)
+       } else(message('[SOLICITUD DENEGADA] Solo se puede entregar un resultado a la vez'))
+  
 }

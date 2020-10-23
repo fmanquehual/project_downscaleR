@@ -40,24 +40,40 @@ install_github('SantanderMetGroup/climate4R.value')
 install_github(#"SantanderMetGroup/drought4R@v0.1.0",
                          "SantanderMetGroup/convertR@v0.1.2") # convert, para convertir Kelvin a Celcius
 
+
+
+
+# ----
+library(devtools)
+
+# install_github("SantanderMetGroup/loadeR.java")
+# install_github("SantanderMetGroup/climate4R.UDG@devel")
+# install_github("SantanderMetGroup/loadeR@v1.4.5")
+# install_github("SantanderMetGroup/transformeR") # no se pudo instalar 'transformeR@v1.4.3'
+# install_github("SantanderMetGroup/visualizeR@v1.2.1")
+# install_github("SantanderMetGroup/downscaleR") # no se pudo instalar 'downscaleR@v3.0.1'
+
+# install_github("SantanderMetGroup/drought4R@v0.1.0")
+# install_github("SantanderMetGroup/convertR@v0.1.2")
+
 # fuente: http://www.meteo.unican.es/work/climate4r/drought4R/drought4R_notebook.html
 
 library(installr)
 # uninstall.packages('glue')
 # 
 # uninstall.packages(c(
-#                      'VALUE',
-#                      "loadeR",
-#                      'loadeR.java',
 #                      'climate4R.UDG',
 #                      'convertR',
 #                      'climate4R.value',
+#                      'VALUE',
+#                      "loadeR",
+#                      'loadeR.java',
 #                      'downscaleR',
 #                      'visualizeR',
 #                      'climate4R.datasets',
 #                      'climate4R.climdex',
 #                      'transformeR'))
-# 
+
 # install_github(c(
 #                  
 #                  "SantanderMetGroup/transformeR",
