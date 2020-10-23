@@ -1,16 +1,16 @@
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
-source('funcion_db_a_formato_ts.R')
+source('funcion_lista_a_formato_ts.R')
 source('funcion_grilla_a_formato_ts.R')
 
-pr.observado <- db_a_formato_ts(estaciones, funcion = mean)
+pr.observado <- lista_a_formato_ts(estaciones, funcion = mean)
 era5 <- grilla_a_formato_ts(pr.sum.puntos)
 
-# pr.simulado.delta <- db_a_formato_ts(pr.sum.corregido.delta, funcion = mean)
-pr.simulado.eqm <- db_a_formato_ts(pr.sum.corregido.eqm, funcion = mean)
-pr.simulado.loci <- db_a_formato_ts(pr.sum.corregido.loci, funcion = mean)
-pr.simulado.pqm <- db_a_formato_ts(pr.sum.corregido.pqm, funcion = mean)
-pr.simulado.ptr <- db_a_formato_ts(pr.sum.corregido.ptr, funcion = mean)
-# pr.simulado.scaling <- db_a_formato_ts(pr.sum.corregido.scaling, funcion = mean)
+# pr.simulado.delta <- lista_a_formato_ts(pr.sum.corregido.delta, funcion = mean)
+pr.simulado.eqm <- lista_a_formato_ts(pr.sum.corregido.eqm, funcion = mean)
+pr.simulado.loci <- lista_a_formato_ts(pr.sum.corregido.loci, funcion = mean)
+pr.simulado.pqm <- lista_a_formato_ts(pr.sum.corregido.pqm, funcion = mean)
+pr.simulado.ptr <- lista_a_formato_ts(pr.sum.corregido.ptr, funcion = mean)
+# pr.simulado.scaling <- lista_a_formato_ts(pr.sum.corregido.scaling, funcion = mean)
 
 
 # todos ----
