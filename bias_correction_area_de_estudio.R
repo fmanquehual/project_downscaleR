@@ -19,7 +19,7 @@ source('funcion_ordenar_por_fecha.R')
 
 # Funciones ----
 
-loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=FALSE, es.cmip6=FALSE){
+loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=FALSE, es.cmip6=FALSE, anhos=anhos.entrenamiento){
   
   if(es.precipitacion==TRUE){estadistico.i <- 'sum'} else(estadistico.i <- 'mean')
   if(es.cmip6==TRUE){extension.i <- c(1, -1)} else(extension.i <- c(0, 0))
@@ -46,7 +46,7 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 db.estaciones <- c()
 db.eqm <- c()
 db.pqm <- c()
-db.gpqm <- c()
+# db.gpqm <- c() # ver apunte del cuaderno!
 db.loci <- c()
 db.ptr <- c()
 db.qdm <- c()
@@ -64,7 +64,8 @@ for (i in 1:12) {
   # Parametros ----
   
   meses <- i # con el año 2010, del 1 al 9no mes, corre bien todo
-  anhos <- 2011:2017#1979:2018 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
+  anhos.entrenamiento <- 2011:2015 #1979:2018 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
+  anhos.total <- 2011:2017
   # latitud <- c(-49,-36) # area de estudio CCR
   # longitud <- c(-75, -72) # area de estudio CCR
   # latitud <- c(-48, -46) # area de estudio WRF
@@ -89,11 +90,20 @@ for (i in 1:12) {
   setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
   # estaciones <- stationInfo(nombre.carpeta) ; estaciones
   
+  
+  estaciones.con.todos.los.anhos <- loadStationData(dataset = nombre.carpeta, 
+                                                    var="precip", 
+                                                    #units = 'mm',
+                                                    #stationID = estaciones$stationID[1],
+                                                    years = anhos.total,
+                                                    season = meses,
+                                                    tz=tz.i)
+  
   estaciones <- loadStationData(dataset = nombre.carpeta, 
                        var="precip", 
                        #units = 'mm',
                        #stationID = estaciones$stationID[1],
-                       years = anhos,
+                       years = anhos.entrenamiento,
                        season = meses,
                        tz=tz.i)
   
@@ -122,16 +132,32 @@ for (i in 1:12) {
   
   message('Transformando unidades de variable')
   
-  pr.sum0 <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE)
-  pr.sum <- udConvertGrid(pr.sum0, new.units = "mm")
+  # Datos de entrenamiento
+  
+  pr.sum0.entrenamiento <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE, anhos = anhos.entrenamiento)
+  pr.sum.entrenamiento <- udConvertGrid(pr.sum0.entrenamiento, new.units = "mm")
   
   if(i>1){c(
-  pr.sum.original <- pr.sum,
-  pr.sum$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum, entregar_fecha_inicio = TRUE, iteracion = i, tz=tz.i)[2])),
-  pr.sum$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
+  # pr.sum.entrenamiento.original <- pr.sum.entrenamiento,
+  pr.sum.entrenamiento$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = TRUE, iteracion = i, tz=tz.i)[2])),
+  pr.sum.entrenamiento$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
   
-  # spatialPlot(climatology(pr.sum, list(FUN = mean, na.rm = T)), backdrop.theme = "countries", color.theme = "YlGnBu",
-  #             main = 'Precipitacion', scales = list(draw = T))
+  
+  # Datos totales
+  
+  pr.sum0.total <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE, anhos = anhos.total)
+  pr.sum.total <- udConvertGrid(pr.sum0.total, new.units = "mm")
+  
+  pr.sum.total.original <- pr.sum.total
+  
+  if(i>1){c(
+    #pr.sum.total.original <- pr.sum.total,
+    pr.sum.total$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = TRUE, iteracion = i, tz=tz.i)[2])),
+    pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
+  
+  # spatialPlot(climatology(pr.sum, list(FUN = mean, na.rm = T)), backdrop.theme = "coastline", scales = list(draw = T),
+  #             sp.layout = list(list(SpatialPoints(getCoordinates(estaciones)), 
+  #                                   pch = 17, col = "black", cex = 1.5)))
   
   # Temperatura
   # tas.mean0 <- loadGridData_personalizado(era5, "t2m", es.precipitacion = FALSE, es.cmip6 = FALSE)
@@ -198,18 +224,19 @@ for (i in 1:12) {
   
   message('Corrigiendo sesgo con metodo EQM')
   
-  pr.sum.corregido.eqm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+  pr.sum.corregido.eqm <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
                                      y = estaciones,
+                                     newdata = pr.sum.total,
                                      precipitation = TRUE,
                                      method = "eqm",
                                      wet.threshold=0.01)
   
   if(i>1){c(
-  pr.sum.corregido.eqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.eqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                      entregar_fecha_inicio = TRUE, 
                                                                      iteracion = i, tz=tz.i)[1])),
   
-  pr.sum.corregido.eqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.eqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                    entregar_fecha_inicio = FALSE, 
                                                                    iteracion = i, tz=tz.i)[1])),
   
@@ -218,24 +245,25 @@ for (i in 1:12) {
   db.eqm.preliminar <- lista_climate4R_a_db(pr.sum.corregido.eqm)
   db.eqm <- rbind(db.eqm, db.eqm.preliminar)
   
-  
+
   
   # Metodo pqm
   
   message('Corrigiendo sesgo con metodo PQM')
   
-  pr.sum.corregido.pqm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+  pr.sum.corregido.pqm <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
                                      y = estaciones,
+                                     newdata = pr.sum.total,
                                      precipitation = TRUE,
                                      method = "pqm",
                                      wet.threshold=0.01)
   
   if(i>1){c(
-  pr.sum.corregido.pqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.pqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                      entregar_fecha_inicio = TRUE, 
                                                                      iteracion = i, tz=tz.i)[1])),
   
-  pr.sum.corregido.pqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.pqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                    entregar_fecha_inicio = FALSE, 
                                                                    iteracion = i, tz=tz.i)[1])),
   
@@ -246,27 +274,30 @@ for (i in 1:12) {
   
   
   
-  # Metodo gpqm
-  
-  pr.sum.corregido.gpqm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
-                                     y = estaciones,
-                                     precipitation = TRUE,
-                                     method = "gpqm",
-                                     wet.threshold=0.01)
-  
-  if(i>1){c(
-    pr.sum.corregido.gpqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
-                                                                       entregar_fecha_inicio = TRUE, 
-                                                                       iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum.corregido.gpqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
-                                                                     entregar_fecha_inicio = FALSE, 
-                                                                     iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum.corregido.gpqm$Data <- formato_datos_para_climate4R(pr.sum.corregido.gpqm) )}
-  
-  db.gpqm.preliminar <- lista_climate4R_a_db(pr.sum.corregido.gpqm)
-  db.gpqm <- rbind(db.gpqm, db.gpqm.preliminar)
+  # # Metodo gpqm
+  # 
+  # message('Corrigiendo sesgo con metodo GPQM')
+  # 
+  # pr.sum.corregido.gpqm <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
+  #                                    y = estaciones,
+  #                                    newdata = pr.sum.total,
+  #                                    precipitation = TRUE,
+  #                                    method = "gpqm",
+  #                                    wet.threshold=0.01)
+  # 
+  # if(i>1){c(
+  #   pr.sum.corregido.gpqm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+  #                                                                      entregar_fecha_inicio = TRUE, 
+  #                                                                      iteracion = i, tz=tz.i)[1])),
+  #   
+  #   pr.sum.corregido.gpqm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+  #                                                                    entregar_fecha_inicio = FALSE, 
+  #                                                                    iteracion = i, tz=tz.i)[1])),
+  #   
+  #   pr.sum.corregido.gpqm$Data <- formato_datos_para_climate4R(pr.sum.corregido.gpqm) )}
+  # 
+  # db.gpqm.preliminar <- lista_climate4R_a_db(pr.sum.corregido.gpqm)
+  # db.gpqm <- rbind(db.gpqm, db.gpqm.preliminar)
   
   
   
@@ -274,18 +305,19 @@ for (i in 1:12) {
   
   message('Corrigiendo sesgo con metodo LOCI')
   
-  pr.sum.corregido.loci <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+  pr.sum.corregido.loci <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
                                       y = estaciones,
+                                      newdata = pr.sum.total,
                                       precipitation = TRUE,
                                       method = "loci",
                                       wet.threshold=0.01)
   
   if(i>1){c(
-  pr.sum.corregido.loci$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.loci$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                      entregar_fecha_inicio = TRUE, 
                                                                      iteracion = i, tz=tz.i)[1])),
   
-  pr.sum.corregido.loci$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.loci$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                    entregar_fecha_inicio = FALSE, 
                                                                    iteracion = i, tz=tz.i)[1])),
   
@@ -300,18 +332,19 @@ for (i in 1:12) {
   
   message('Corrigiendo sesgo con metodo PTR')
   
-  pr.sum.corregido.ptr <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+  pr.sum.corregido.ptr <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
                                       y = estaciones,
+                                      newdata = pr.sum.total,
                                       precipitation = TRUE,
                                       method = "ptr",
                                       wet.threshold=0.01)
   
   if(i>1){c(
-  pr.sum.corregido.ptr$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.ptr$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                       entregar_fecha_inicio = TRUE, 
                                                                       iteracion = i, tz=tz.i)[1])),
   
-  pr.sum.corregido.ptr$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+  pr.sum.corregido.ptr$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                     entregar_fecha_inicio = FALSE, 
                                                                     iteracion = i, tz=tz.i)[1])),
   
@@ -334,19 +367,22 @@ for (i in 1:12) {
   
   # Metodo qdm
   
-  pr.sum.corregido.qdm <- biasCorrection(x=pr.sum, # hay problemas con el mes 10, 11 y 12
+  message('Corrigiendo sesgo con metodo QDM')
+  
+  pr.sum.corregido.qdm <- biasCorrection(x=pr.sum.entrenamiento, # hay problemas con el mes 10, 11 y 12
                                       y = estaciones,
+                                      newdata = pr.sum.total,
                                       precipitation = TRUE,
                                       method = "qdm",
                                       wet.threshold=0.01)
               
   
   if(i>1){c(
-    pr.sum.corregido.qdm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+    pr.sum.corregido.qdm$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                        entregar_fecha_inicio = TRUE, 
                                                                        iteracion = i, tz=tz.i)[1])),
     
-    pr.sum.corregido.qdm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
+    pr.sum.corregido.qdm$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
                                                                      entregar_fecha_inicio = FALSE, 
                                                                      iteracion = i, tz=tz.i)[1])),
     
@@ -357,21 +393,50 @@ for (i in 1:12) {
   
   
   
-  # Estaciones
   
-  if(i>1){c(
-    estaciones$Dates$start <- as.vector(unlist(nuevas_fechas(estaciones.original, 
-                                                                       entregar_fecha_inicio = TRUE, 
-                                                                       iteracion = i, tz=tz.i)[1])),
-    
-    estaciones$Dates$end <- as.vector(unlist(nuevas_fechas(estaciones.original, 
-                                                                     entregar_fecha_inicio = FALSE, 
-                                                                     iteracion = i, tz=tz.i)[1])),
-    
-    estaciones$Data <- formato_datos_para_climate4R(estaciones) )}
+  # Valores observados ----
   
-    db.estaciones.preliminar <- lista_climate4R_a_db(estaciones)
-    db.estaciones <- rbind(db.estaciones, db.estaciones.preliminar)
+  message('Valores observados')
+  
+  # if(i>1){c(
+  #   estaciones$Dates$start <- as.vector(unlist(nuevas_fechas(estaciones.original, 
+  #                                                            entregar_fecha_inicio = TRUE, 
+  #                                                            iteracion = i, tz=tz.i)[1])),
+  #   
+  #   estaciones$Dates$end <- as.vector(unlist(nuevas_fechas(estaciones.original, 
+  #                                                          entregar_fecha_inicio = FALSE, 
+  #                                                          iteracion = i, tz=tz.i)[1])),
+  #   
+  #  estaciones$Data <- formato_datos_para_climate4R(estaciones) )}
+  
+  db.estaciones.preliminar <- lista_climate4R_a_db(estaciones.con.todos.los.anhos)
+  db.estaciones <- rbind(db.estaciones, db.estaciones.preliminar)
+  
+  # fin ---
+  
+  
+  
+  
+  # Extrayendo valores de los pixeles donde estan ubicados las estaciones ----
+  
+  message('Extrayendo valores de celda donde estan ubicados las estaciones')
+  
+  pr.sum.total$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+                                                             entregar_fecha_inicio = TRUE, 
+                                                             iteracion = i, tz=tz.i)[1]))
+  
+  pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+                                                           entregar_fecha_inicio = FALSE, 
+                                                           iteracion = i, tz=tz.i)[1]))
+  
+  pr.sum.total$Data <- formato_datos_para_climate4R(pr.sum.total)
+  
+  era5.en.ubicacion.de.estacion.i <- grid2sp(pr.sum.total)
+  db.era5.preliminar <- grilla_a_db(era5.en.ubicacion.de.estacion.i)
+  db.era5 <- rbind(db.era5, db.era5.preliminar)
+  
+  # fin ---
+  
   
   
   
@@ -385,27 +450,7 @@ for (i in 1:12) {
   #             main = 'Precipitacion', scales = list(draw = T))
   # 
   # temporalPlot(pr.sum, aggr.spatial = list(FUN = mean, na.rm = TRUE))
-  
-  
-  
-  # Pixel por estacion
-  
-  message('Extrayendo valores de celda donde estan ubicados las estaciones')
-  
-  if(i>1){c(
-    pr.sum$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
-                                                         entregar_fecha_inicio = TRUE, 
-                                                         iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.original, 
-                                                       entregar_fecha_inicio = FALSE, 
-                                                       iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum$Data <- formato_datos_para_climate4R(pr.sum) )}
-  
-  era5.en.ubicacion.de.estacion.i <- grid2sp(pr.sum)
-  db.era5.preliminar <- grilla_a_db(era5.en.ubicacion.de.estacion.i)
-  db.era5 <- rbind(db.era5, db.era5.preliminar)
+
 
   # fin ---
 
@@ -424,7 +469,7 @@ for (i in 1:12) {
 db.estaciones.ordenado <- ordenar_por_fecha(db.estaciones) ; dim(db.estaciones.ordenado)
 db.eqm.ordenado <- ordenar_por_fecha(db.eqm) ; dim(db.eqm.ordenado)
 db.pqm.ordenado <- ordenar_por_fecha(db.pqm) ; dim(db.pqm.ordenado)
-db.gpqm.ordenado <- ordenar_por_fecha(db.gpqm) ; dim(db.gpqm.ordenado)
+# db.gpqm.ordenado <- ordenar_por_fecha(db.gpqm) ; dim(db.gpqm.ordenado)
 db.loci.ordenado <- ordenar_por_fecha(db.loci) ; dim(db.loci.ordenado)
 db.ptr.ordenado <- ordenar_por_fecha(db.ptr) ; dim(db.ptr.ordenado)
 db.qdm.ordenado <- ordenar_por_fecha(db.qdm) ; dim(db.qdm.ordenado)
@@ -442,7 +487,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/
 write.csv(db.estaciones.ordenado, 'estaciones.csv', row.names = FALSE)
 write.csv(db.eqm.ordenado, 'eqm.csv', row.names = FALSE)
 write.csv(db.pqm.ordenado, 'pqm.csv', row.names = FALSE)
-write.csv(db.gpqm.ordenado, 'gpqm.csv', row.names = FALSE)
+# write.csv(db.gpqm.ordenado, 'gpqm.csv', row.names = FALSE)
 write.csv(db.loci.ordenado, 'loci.csv', row.names = FALSE)
 write.csv(db.ptr.ordenado, 'ptr.csv', row.names = FALSE)
 write.csv(db.qdm.ordenado, 'qdm.csv', row.names = FALSE)
