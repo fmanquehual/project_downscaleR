@@ -15,7 +15,7 @@ datos_observados_por_anhos_de_interes <- function(base_de_datos, anhos_de_intere
     
     if(anhos.match==TRUE){message('Se encontraron todos los anhos de interes')} else( c(
         
-        message('Pero solo se hallaron datos para:'),
+        message('Solo se hallaron datos para:'),
     
         for (i in 1:length(anhos.despues.del.filtro)) {
             message(anhos.despues.del.filtro[i])

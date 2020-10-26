@@ -1,9 +1,10 @@
 library(stringr)
 library(lubridate)
 
-nuevas_fechas <- function(lista.climate4R, entregar_fecha_inicio=TRUE, iteracion, tz=NULL){
+nuevas_fechas <- function(lista.climate4R, entregar_fecha_inicio=TRUE, 
+                          datos_simulados=FALSE, iteracion, tz=NULL){
   
-  # lista.climate4R <- pr.sum.original
+  # lista.climate4R <- pr.sum.total.original
   # iteracion <- i
   
   fecha_inicio <- lista.climate4R$Dates$start
@@ -15,10 +16,16 @@ nuevas_fechas <- function(lista.climate4R, entregar_fecha_inicio=TRUE, iteracion
   id <- str_detect(nueva_fecha_inicio, '01-31')
   
   if(iteracion==2){nuevos_anhos <- year(nueva_fecha_inicio[id])-1} else(nuevos_anhos <- year(nueva_fecha_inicio[id]))
-  
-  
+
   if(is.null(tz)){nueva_fecha_inicio[id] <- paste0(nuevos_anhos, '-12-31 00:00:00')
   } else(nueva_fecha_inicio[id] <- paste0(nuevos_anhos, '-12-31', ' ', tz)) 
+    
+  # if(datos_simulados==FALSE){
+  #   
+  #     if(is.null(tz)){nueva_fecha_inicio[id] <- paste0(nuevos_anhos, '-12-31 00:00:00')
+  #     } else(nueva_fecha_inicio[id] <- paste0(nuevos_anhos, '-12-31 00:00:00', ' ', tz)) 
+  #   
+  # } else(nueva_fecha_inicio[id] <- paste0(nuevos_anhos, '-12-31', ' ', tz))
   
   nueva_fecha_fin_preliminar <- gsub(mes.i, '-01-', fecha_fin)
   

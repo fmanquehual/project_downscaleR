@@ -7,19 +7,19 @@ source('funcion_db_a_formato_ts.R')
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
 
-estaciones <- read.csv('estaciones.csv') ; summary(estaciones$valor) ; dim(estaciones)
-eqm <- read.csv('eqm.csv') ; summary(eqm$valor) ; dim(eqm)
-pqm <- read.csv('pqm.csv') ; summary(pqm$valor) ; dim(pqm)
-# gpqm <- read.csv('gpqm.csv') ; summary(gpqm$valor) ; dim(gpqm)
-loci <- read.csv('loci.csv') ; summary(loci$valor) ; dim(loci)
-ptr <- read.csv('ptr.csv') ; summary(ptr$valor) ; dim(ptr)
-qdm <- read.csv('qdm.csv') ; summary(qdm$valor) ; dim(qdm)
-era5 <- read.csv('era5.csv') ; summary(era5$valor) ; dim(era5)
+estaciones <- read.csv('estaciones.csv') ; summary(estaciones$valor)
+eqm <- read.csv('eqm.csv') ; summary(eqm$valor)
+pqm <- read.csv('pqm.csv') ; summary(pqm$valor)
+gpqm <- read.csv('gpqm.csv') ; summary(gpqm$valor)
+loci <- read.csv('loci.csv') ; summary(loci$valor)
+ptr <- read.csv('ptr.csv') ; summary(ptr$valor)
+qdm <- read.csv('qdm.csv') ; summary(qdm$valor)
+era5 <- read.csv('era5.csv') ; summary(era5$valor)
 
 estaciones.ts <- db_a_formato_ts(estaciones, calculo_diario = sum, calculo_mensual = mean)
 eqm.ts <- db_a_formato_ts(eqm, calculo_diario = sum, calculo_mensual = mean)
 pqm.ts <- db_a_formato_ts(pqm, calculo_diario = sum, calculo_mensual = mean)
-# gpqm.ts <- db_a_formato_ts(gpqm, calculo_diario = sum, calculo_mensual = mean)
+gpqm.ts <- db_a_formato_ts(gpqm, calculo_diario = sum, calculo_mensual = mean)
 loci.ts <- db_a_formato_ts(loci, calculo_diario = sum, calculo_mensual = mean)
 ptr.ts <- db_a_formato_ts(ptr, calculo_diario = sum, calculo_mensual = mean)
 qdm.ts <- db_a_formato_ts(qdm, calculo_diario = sum, calculo_mensual = mean)
@@ -33,7 +33,7 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/
 
 # todos ----
 
-png('todos_los_metodos_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('todos_los_metodos_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, valor.maximo), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs distintas correciones de ERA5 (2011-2017)',
@@ -44,15 +44,15 @@ abline(v=c(1:12), h=c(seq(0, valor.maximo, 25)), col='gray')
 
 lines(eqm.ts, lty=1, col='blue')
 lines(pqm.ts, lty=1, col='red')
-# lines(gpqm.ts, lty=1, col='purple')
+lines(gpqm.ts, lty=1, col='purple')
 lines(loci.ts, lty=1, col='green')
 lines(ptr.ts, lty=1, col='orange')
 lines(qdm.ts, lty=1, col='yellow')
 lines(era5.ts, lty=1, lwd=2, col='red')
 
-legend('topright', legend = c('Observado', 'ERA5', 'EQM', 'LOCI', 'PQM', 'PTR', 'QDM'), 
+legend('topright', legend = c('Observado', 'ERA5', 'EQM', 'LOCI', 'PQM', 'GPQM', 'PTR', 'QDM'), 
        lty = c(1,1,1,1,1,1), lwd=c(2,2,1,1,1,1,1), 
-       col = c('black', 'red', 'blue', 'green', 'red', 'orange', 'yellow'))
+       col = c('black', 'red', 'blue', 'green', 'red', 'purple', 'orange', 'yellow'))
 
 dev.off()
 
@@ -63,7 +63,7 @@ dev.off()
 
 # eqm ----
 
-png('eqm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('eqm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs correcion EQM de ERA5 (2011-2017)', ylab=expression('mm mensual total'^-1), 
@@ -87,7 +87,7 @@ dev.off()
 
 # loci ----
 
-png('loci_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('loci_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs correcion LOCI de ERA5 (2011-2017)', 
@@ -111,7 +111,7 @@ dev.off()
 
 # pqm ----
 
-png('pqm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('pqm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs correcion PQM de ERA5 (2011-2017)', 
@@ -136,21 +136,21 @@ dev.off()
 # gpqm ----
 
 # png('gpqm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
-# 
-# plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
-#      main= 'Observado vs correcion GPQM de ERA5 (2011-2017)', 
-#      ylab=expression('mm mensual total'^-1), xlab='Mes', xaxt = 'n')
-# 
-# axis(1, at = 1:12, labels = 1:12)
-# abline(v=c(1:12), h=c(seq(0, valor.maximo, 25)), col='gray')
-# 
-# lines(era5.ts, lty=1, lwd=2, col='red')
-# lines(gpqm.ts, lty=2, lwd=2, col='green')
-# 
-# legend('topright', legend = c('Observado', 'ERA5', 'GPQM'), lty = c(1,1,2), lwd=c(2,2,2),
-#        col = c('black', 'red', 'green'))
-# 
-# dev.off()
+
+plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2,
+     main= 'Observado vs correcion GPQM de ERA5 (2011-2017)',
+     ylab=expression('mm mensual total'^-1), xlab='Mes', xaxt = 'n')
+
+axis(1, at = 1:12, labels = 1:12)
+abline(v=c(1:12), h=c(seq(0, valor.maximo, 25)), col='gray')
+
+lines(era5.ts, lty=1, lwd=2, col='red')
+lines(gpqm.ts, lty=2, lwd=2, col='green')
+
+legend('topright', legend = c('Observado', 'ERA5', 'GPQM'), lty = c(1,1,2), lwd=c(2,2,2),
+       col = c('black', 'red', 'green'))
+
+dev.off()
 
 # fin ---
 
@@ -159,7 +159,7 @@ dev.off()
 
 # ptr ----
 
-png('ptr_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('ptr_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs correcion PTR de ERA5 (2011-2017)', 
@@ -183,7 +183,7 @@ dev.off()
 
 # qdm ----
 
-png('qdm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+# png('qdm_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
 
 plot(estaciones.ts, ylim=c(0, max(valor.maximo)), col = c('black'), lty=1, lwd=2, 
      main= 'Observado vs correcion QDM de ERA5 (2011-2017)', 

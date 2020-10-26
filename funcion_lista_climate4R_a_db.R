@@ -1,6 +1,6 @@
 lista_climate4R_a_db <- function(lista.climate4R){
   
-  # lista.climate4R <- pr.sum.corregido.eqm  
+  # lista.climate4R <- estaciones.con.todos.los.anhos
   
   valores <- lista.climate4R$Data
   fecha <- lista.climate4R$Dates$start

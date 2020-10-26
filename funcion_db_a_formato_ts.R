@@ -2,15 +2,25 @@ library(lubridate)
 
 db_a_formato_ts <- function(base_de_datos, calculo_diario=sum, calculo_mensual=mean){
   
-  # base_de_datos <- era5
+  # base_de_datos <- eqm
+  
+  # eliminando NA's
+  id_elementos_con_NA <- which(is.na(base_de_datos$valor))
+  cantidad_de_NA <- length(id_elementos_con_NA)
+  mensaje_cantidad_de_NA <- paste('La base de datos tiene', cantidad_de_NA, 'NA', sep = ' ')
+  
+  if(cantidad_de_NA > 0){base_de_datos <- base_de_datos[-id_elementos_con_NA,]}
+  if(cantidad_de_NA > 0){message(mensaje_cantidad_de_NA)}
   
   # calculo a nivel diario
+  base_de_datos$fecha <- as.Date(base_de_datos$fecha)
   anho <- year(base_de_datos$fecha)
   mes <- month(base_de_datos$fecha)
   
   base_de_datos$anho_mes <- paste(anho, mes, sep = '-')
   
-  calculo.diario <- tapply(base_de_datos$valor, base_de_datos$anho_mes, calculo_diario)
+  # NO OCUPAR "na.rm=TRUE" EN tapply() PORQUE DA PROBLEMAS
+  calculo.diario <- tapply(base_de_datos$valor, base_de_datos$anho_mes, calculo_diario) 
   mes.2 <- names(calculo.diario)
   valor.mensual <- as.vector(calculo.diario)
   

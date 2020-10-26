@@ -10,7 +10,7 @@ generador_de_matriz <- function(base_de_datos){
   
   # Matriz
   for (i in 1:length(nombre.archivos.i)) {
-    # i <- 6
+    # i <- 1
     base_de_datos.valores.i <- subset(base_de_datos.valores, archivo.con.coordenadas==nombre.archivos.i[i])
     base_de_datos.valores.i2 <- base_de_datos.valores.i[, c("YYYYMMDD", "valor.observado")]
     colnames(base_de_datos.valores.i2)[2] <- nombre.archivos.i[i]
@@ -18,14 +18,9 @@ generador_de_matriz <- function(base_de_datos){
     
     if(i==1){matriz.de.valores.por.estacion0 <- base_de_datos.valores.i2
     } else(matriz.de.valores.por.estacion0 <- merge(matriz.de.valores.por.estacion0, base_de_datos.valores.i2, by='YYYYMMDD', all=TRUE))
-  # print(i)  
   }
   
   matriz.de.valores.por.estacion <- matriz.de.valores.por.estacion0
-  
-  for (j in 2:ncol(matriz.de.valores.por.estacion0)) {
-    matriz.de.valores.por.estacion[,j][matriz.de.valores.por.estacion[,j]%in%NA] <- NaN
-  }
   
   return(matriz.de.valores.por.estacion)
   

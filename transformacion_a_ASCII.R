@@ -1,7 +1,6 @@
 library(PerformanceAnalytics)
 library(rgdal)
 library(raster)
-# library(meteoland) # interpolacion temporal y espacial
 
 rm(list=ls())
 dev.off()
@@ -165,7 +164,7 @@ head(variable.i)
 
 # matriz.tmin <- generador_de_matriz(db.tmin) ; head(matriz.tmin)
 # matriz.tmax <- generador_de_matriz(db.tmax) ; head(matriz.tmax)
-matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp)
+matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp) ; dim(matriz.pp)
 
 # save
 
@@ -181,116 +180,3 @@ write.table(matriz.pp, file='precip.txt', row.names=FALSE, col.names=TRUE, sep="
             append=FALSE, quote=FALSE, na = 'NaN')
   
 # fin ---
-
-
-
-
-# Interpolacion de datos ----
-
-# NO FUNCIONO, LOS RESULTADOS NO TIENEN SENTIDO! LO QUE QUEDA ES DESCARGAR DATOS DIARIOS
-
-# fuente: https://cran.r-project.org/web/packages/meteoland/vignettes/UserGuide.html
-
-nombres.estaciones.compartidas.temperatura <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = db.pp$archivo.con.datos.climaticos,
-                                                                                   vector_con_nombres_a_evaluar = db.tmin$archivo.con.datos.climaticos,
-                                                                                   porcentaje_de_aciertos = 75,
-                                                                                   es_precipitacion = FALSE)
-nombres.estaciones.compartidas.temperatura
-
-nombres.estaciones.compartidas.precipitacion <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = db.pp$archivo.con.datos.climaticos,
-                                                              vector_con_nombres_a_evaluar = db.tmin$archivo.con.datos.climaticos,
-                                                              porcentaje_de_aciertos = 75,
-                                                              es_precipitacion = TRUE)
-nombres.estaciones.compartidas.precipitacion
-
-# estaciones.compartidas3 <- identificador_de_nombres_similares(vector_con_nombres_de_referencia = estaciones.compartidas2,
-#                                                               vector_con_nombres_a_evaluar = db.rh$archivo.con.datos.climaticos,
-#                                                               porcentaje_de_aciertos = 75)
-# estaciones.compartidas3
-
-estaciones.db.todos$source <- as.character(estaciones.db.todos$source)
-estaciones.compartidas.temperatura <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.temperatura,]
-estaciones.compartidas.precipitacion <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.precipitacion,]
-
-
-# esto comenzo por el desfaz temporal de los datos. Estaciones metereologicas estan cada 5 dias y las grillas estan diarias. La idea es interpolar...
-# los datos de las estaciones en forma diaria
-
-
-estaciones.db.todos.filtrado0 <- estaciones.db.todos[estaciones.db.todos$source%in%nombres.estaciones.compartidas.temperatura|
-                                                    estaciones.db.todos$source%in%nombres.estaciones.compartidas.precipitacion,]
-estaciones.db.todos.filtrado0$lon_lat <- paste(estaciones.db.todos.filtrado0$longitude, estaciones.db.todos.filtrado0$latitude, sep = '_')
-estaciones.db.todos.filtrado <- estaciones.db.todos.filtrado0[!duplicated(estaciones.db.todos.filtrado0$lon_lat),]
-
-estaciones.temperatura <- SpatialPoints(estaciones.db.todos.filtrado[,c("longitude", "latitude")],
-                                        proj4string = CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'))
-plot(estaciones.temperatura, axes=TRUE)
-
-
-db.tmin.filtrado <- db.tmin[db.tmin$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
-db.tmax.filtrado <- db.tmax[db.tmax$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
-db.pp.filtrado <- db.pp[db.pp$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.precipitacion,]
-# db.rh.filtrado <- db.rh[db.rh$archivo.con.datos.climaticos%in%nombres.estaciones.compartidas.temperatura,]
-
-matriz.tmin2 <- db_a_matriz(generador_de_matriz(db.tmin.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.tmin2[, 1:6]
-matriz.tmax2 <- db_a_matriz(generador_de_matriz(db.tmax.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.tmax2[, 1:6]
-matriz.pp2 <- db_a_matriz(generador_de_matriz(db.pp.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.pp2[, 1:6]
-# matriz.rh2 <- db_a_matriz(generador_de_matriz(db.rh.filtrado), filas_son_fechas=TRUE, separador_fecha='-') ; matriz.rh2[, 1:6]
-
-# estaciones.db.todos.filtrado <- estaciones.db.todos.filtrado[-nrow(estaciones.db.todos.filtrado),]
-interpolator <- MeteorologyInterpolationData(estaciones.temperatura, elevation = estaciones.db.todos.filtrado$altitude,
-                                             MinTemperature = matriz.tmin2,
-                                             MaxTemperature = matriz.tmax2,
-                                             Precipitation = matriz.pp2)#,
-                                             #RelativeHumidity = matriz.rh2)
-class(interpolator)
-
-temporal_coverage <- interpolation.coverage(interpolator, type = 'temporal')
-head(temporal_coverage)
-
-spatial_coverage <- interpolation.coverage(interpolator, type = 'spatial')
-plot(spatial_coverage, axes=TRUE)
-spatial_coverageQ@data
-
-# fin ---
-
-
-
-
-# a raster ASCII ----
-# setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
-# area.de.estudio <- raster('dem_clip.tif')
-# plot(area.de.estudio)
-# 
-# setwd('C:/Users/Usuario/Documents/Francisco/var_predictoras/CCSM4/rcp45/pp/2011')
-# raster.referencia <- raster('NASA_NEX_GDDP_CCSM4__RCP45_pp_ver_2011_04.tif')
-# plot(raster.referencia)
-# 
-# subset.i <- subset(db.todos, anho==2010 & mes==1)
-# row.names(subset.i) <- 1:nrow(subset.i)
-# plot(subset.i$lon, subset.i$lat)
-# 
-# # Transformacion a Spatial Points Data Frame
-# subset.i.sp <- SpatialPoints(list(subset.i$lon, subset.i$lat), proj4string = crs(raster.referencia))
-# subset.i.spd <- SpatialPointsDataFrame(subset.i.sp, data = subset.i, match.ID = TRUE)
-# 
-# plot(subset.i.spd, pch = 16, col = 'red', axes=TRUE)
-# text(subset.i.spd, subset.i.spd$archivo.con.datos.climaticos, pos = 3, cex=0.7)
-# 
-# # Rasterizacion
-# plot(raster.referencia)
-# raster.referencia.clip <- crop(raster.referencia, area.de.estudio)
-# plot(raster.referencia.clip)
-# 
-# r.subset.i <- rasterize(subset.i.spd, raster.referencia.clip, field="valor.observado", fun="last", background=NA)
-# plot(r.subset.i)
-# # zoom(r.subset.i, ext=drawExtent())
-# r.subset.i
-# 
-# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/downscaled_WRF/')
-# # writeRaster(r.subset.i,'downscaled_WRF_referencia.asc', format='ascii', overwrite=TRUE)
-# 
-# 
-# r <- raster('downscaled_WRF_referencia.asc')
-# plot(r)
-# summary(r)

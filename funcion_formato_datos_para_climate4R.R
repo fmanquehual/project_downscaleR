@@ -1,15 +1,55 @@
-formato_datos_para_climate4R <- function(lista.climate4R){
+library(lubridate)
 
-  # lista.climate4R <- pr.sum.corregido.eqm
+formato_datos_para_climate4R <- function(lista_climate4R_a_depurar, lista_climate4R_referencia, 
+                                         entregar_fecha_inicio=TRUE, iteracion, tz=NULL){
+
+  # lista_climate4R_referencia <- pr.sum.total.original
+  # lista_climate4R_a_depurar <- pr.sum.corregido.eqm
+  # iteracion <- i
   
-  datos <- lista.climate4R$Data
+  datos_a_depurar <- lista_climate4R_a_depurar$Data
+  fechas_originales <- as.vector(unlist(nuevas_fechas(lista_climate4R_referencia,
+                                                      entregar_fecha_inicio = entregar_fecha_inicio, 
+                                                      iteracion = iteracion, tz=tz)[1]))
   
-  id.valores.NA <- which(is.na(datos))
+  db_fecha_original <- data.frame(fecha=fechas_originales)
+  db_fecha_original$anho <- year(db_fecha_original$fecha)
   
-  if(length(id.valores.NA)==0){datos_depurados <- datos
-    } else(c(datos_depurados <- datos[-id.valores.NA],
-             attr(datos_depurados, "dimensions") <- "time"))
+  anhos_unicos <- unique(db_fecha_original$anho)
+  numero_de_dias_enero <- 31
+  datos_correctos <- c()
   
-  return(datos_depurados)
+  if( (length(datos_a_depurar)/2) == length(fechas_originales) ){
+  
+  id_elementos_NA <- which(is.na(datos_a_depurar))
+  datos_correctos <- datos_a_depurar[-id_elementos_NA]
+  
+  } else(
+      for (i in 1:length(anhos_unicos)) {
+        # i <- 2
+        
+        anho.i <- anhos_unicos[i]
+        
+        db_fecha_original_subset <- subset(db_fecha_original, anho==anho.i)
+        numero_de_filas_a_conservar <- nrow(db_fecha_original_subset)
+        elemento_sobrante_a_eliminar <- numero_de_dias_enero-numero_de_filas_a_conservar
+        
+        if(i==1){datos_restantes.i <- datos_a_depurar[-(1:numero_de_filas_a_conservar)]
+          } else( c(
+            datos_correctos.i <- datos_restantes.i[1:numero_de_filas_a_conservar],
+            datos_restantes.i <- datos_restantes.i[-(1:numero_de_filas_a_conservar)]) )
+        
+        if(elemento_sobrante_a_eliminar!=0){datos_restantes.i <- datos_restantes.i[-c(1:elemento_sobrante_a_eliminar)]}
+        
+        if(i==1){datos_correctos.i <- datos_a_depurar[1:numero_de_filas_a_conservar]}
+        
+        datos_correctos <- c(datos_correctos, datos_correctos.i)
+        
+      }
+    )
+  
+  attr(datos_correctos, "dimensions") <- "time"
+  
+  return(datos_correctos)
   
   }
