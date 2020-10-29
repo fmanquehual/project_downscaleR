@@ -33,7 +33,7 @@ tail(db.estaciones)
 
 # Preparacion de db ----
 
-anhos.interes <- 1970:2018
+anhos.interes <- 1950:2018
 
 # tmin
 # carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/'
@@ -78,8 +78,8 @@ db.pp <- union_db_valores_observados_y_coordenadas(archivos.pp, variable.de.inte
 db.pp$variable <- 'precip'
 
 unique(db.pp$archivo.con.coordenadas)
-estaciones.de.interes <- c('Rio.Nef.Antes.Junta.Estero.el.Revalse_DGA')
-db.pp <- db.pp[db.pp$archivo.con.coordenadas%in%estaciones.de.interes,]
+# estaciones.de.interes <- c('Rio.Nef.Antes.Junta.Estero.el.Revalse_DGA')
+# db.pp <- db.pp[db.pp$archivo.con.coordenadas%in%estaciones.de.interes,]
 
 head(db.pp)
 tail(db.pp)
@@ -125,18 +125,22 @@ estaciones <- read.table("stations.txt", sep = ",", header = TRUE)
 head(estaciones)
 head(db.todos)
 
-estaciones.db.todos0 <- data.frame(station_id = db.todos$archivo.con.coordenadas, name = db.todos$archivo.con.coordenadas,
+estaciones.db.todos0 <- data.frame(station_id = NA, name = db.todos$archivo.con.coordenadas,
                                   longitude = db.todos$lon, latitude = db.todos$lat, altitude = NaN, 
                                   source = db.todos$archivo.con.datos.climaticos)
+
 estaciones.db.todos <- estaciones.db.todos0[!duplicated(estaciones.db.todos0$name), ]
-estaciones.db.todos
+
+del_1_al_9 <- paste0('00', 1:9)
+del_10_a_n <- paste0('0', 10:nrow(estaciones.db.todos))
+estaciones.db.todos$station_id <- c(del_1_al_9, del_10_a_n)
 
 estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84')
 head(estaciones.db.todos)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
-# write.table(estaciones.db.todos, file='stations.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE, na = 'NaN')
+write.table(estaciones.db.todos, file='stations.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+            append=FALSE, quote=FALSE, na = 'NaN')
 
 
 # informacion de variables
@@ -151,8 +155,8 @@ variables2 <- variables1[id,]
 variables2
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
-# write.table(variables2, file='variables.txt', row.names=FALSE, col.names=TRUE, sep=", ",
-#             append=FALSE, quote=FALSE, na = 'NaN')
+write.table(variables2, file='variables.txt', row.names=FALSE, col.names=TRUE, sep=", ",
+            append=FALSE, quote=FALSE, na = 'NaN')
 
 
 
@@ -165,6 +169,8 @@ head(variable.i)
 # matriz.tmin <- generador_de_matriz(db.tmin) ; head(matriz.tmin)
 # matriz.tmax <- generador_de_matriz(db.tmax) ; head(matriz.tmax)
 matriz.pp <- generador_de_matriz(db.pp) ; head(matriz.pp) ; dim(matriz.pp)
+colnames(matriz.pp) <- c('YYYYMMDD', del_1_al_9, del_10_a_n)
+matriz.pp
 
 # save
 

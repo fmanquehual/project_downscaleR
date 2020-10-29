@@ -43,17 +43,17 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 
 # Parametros ----
 
-anhos.entrenamiento <- 2011:2015 #1979:2018 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
-anhos.total <- 2011:2017
+anhos.entrenamiento <- 1979:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
+anhos.total <- 1979:2017
 # latitud <- c(-49,-36) # area de estudio CCR
 # longitud <- c(-75, -72) # area de estudio CCR
-# latitud <- c(-48, -46) # area de estudio WRF
-# longitud <- c(-74, -71) # area de estudio WRF
-latitud <- c(-47.3, -47)
-longitud <- c(-73.3, -73)
+latitud <- c(-48.5, -45.5) # area de estudio WRF
+longitud <- c(-74, -71) # area de estudio WRF
+# latitud <- c(-47.3, -47)
+# longitud <- c(-73.3, -73)
 umbral <- 1 # The minimum value that is considered as a non-zero precipitation (default is 1 mm)
 # Con el umbral=0, da problemas en gpqm (valores muy altos, al final la correcion empeora la estimacion de pp)
-# Las correciones mejoran bastante cuando el umbral es 1.
+# Las correciones mejoran bastante cuando el umbral es 1 (default).
 
 db.estaciones <- c()
 db.eqm <- c()
@@ -74,7 +74,7 @@ tz.i <- 'GMT'
 # Correccion mensual ----
 
 for (i in 1:12) {
-  #i <- 12
+  # i <- 1
   
   mensaje.inicio <- paste('Inicio de proceso con mes', i, '--------------------------------------------------------------')
   message(mensaje.inicio)
@@ -83,7 +83,6 @@ for (i in 1:12) {
 
   
 
-    
   # Lectura de datos ----
   
   message('Leyendo datos de estaciones')
@@ -129,8 +128,6 @@ for (i in 1:12) {
   setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA5/copernicus/')
   era5 <- 'ERA5_1979_2018_pp.nc'
   
-  # inventario.era5 <- dataInventory(era5)
-  # inventario.era5$tp$Dimensions$time$Date_range
   
   # Precipitacion
   # C4R.vocabulary()
@@ -164,9 +161,9 @@ for (i in 1:12) {
     pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = FALSE, 
                                                              datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])) )}
   
-  # spatialPlot(climatology(pr.sum, list(FUN = mean, na.rm = T)), backdrop.theme = "coastline", scales = list(draw = T),
-  #             sp.layout = list(list(SpatialPoints(getCoordinates(estaciones)), 
-  #                                   pch = 17, col = "black", cex = 1.5)))
+  # spatialPlot(climatology(pr.sum.total, list(FUN = mean, na.rm = T)), backdrop.theme = "coastline", scales = list(draw = T),
+  #             sp.layout = list(list(SpatialPoints(getCoordinates(estaciones.con.todos.los.anhos)),
+  #                                   col = "black", cex = 1.5)))
   
   # Temperatura
   # tas.mean0 <- loadGridData_personalizado(era5, "t2m", es.precipitacion = FALSE, es.cmip6 = FALSE)
@@ -242,6 +239,7 @@ for (i in 1:12) {
                                      newdata = pr.sum.total,
                                      precipitation = TRUE,
                                      method = "eqm",
+                                     # extrapolation = 'constant', # no pasa nada
                                      wet.threshold=umbral)
   
   if(i>1){c(
@@ -445,7 +443,7 @@ for (i in 1:12) {
                                                            iteracion = i, tz=tz.i)[1]))
   
   era5.en.ubicacion.de.estacion.i <- grid2sp(pr.sum.total)
-  db.era5.preliminar <- grilla_a_db(era5.en.ubicacion.de.estacion.i)
+  db.era5.preliminar <- grilla_a_db(era5.en.ubicacion.de.estacion.i, estaciones)
   db.era5 <- rbind(db.era5, db.era5.preliminar)
   
   # fin ---

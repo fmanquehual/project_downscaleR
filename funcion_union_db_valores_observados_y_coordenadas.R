@@ -24,10 +24,7 @@ union_db_valores_observados_y_coordenadas <- function(lista_de_archivos, variabl
   db.todos <- c()
   
   for (i in 1:length(lista_de_archivos)) {
-    # i <- 24
-    
-    message(lista_de_archivos[i])
-    
+    # i <- 7
     
     # Lectura de archivos
     setwd(directorio_de_trabajo)
@@ -71,8 +68,9 @@ union_db_valores_observados_y_coordenadas <- function(lista_de_archivos, variabl
     
     # Preparacion de archivo final
     db2.i <- datos_observados_por_anhos_de_interes(db.i, anhos.interes, variable = variable_de_interes)
-    db3.i <- anhadiendo_coordenadas(db2.i, lista_de_archivos[i], variable = variable_de_interes)
-    db.todos <- rbind(db.todos, db3.i)
+    db3.i <- db2.i[!duplicated(db2.i$Date),]
+    db4.i <- anhadiendo_coordenadas(db3.i, lista_de_archivos[i], variable = variable_de_interes)
+    db.todos <- rbind(db.todos, db4.i)
   }
   
   return(db.todos)

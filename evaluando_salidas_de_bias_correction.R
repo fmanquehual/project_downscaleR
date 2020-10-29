@@ -15,14 +15,16 @@ ptr <- read.csv('ptr.csv') ; summary(ptr$valor)
 qdm <- read.csv('qdm.csv') ; summary(qdm$valor)
 era5 <- read.csv('era5.csv') ; summary(era5$valor)
 
+unique(eqm$nombre_estacion)
+estacion.de.interes <- unique(eqm$nombre_estacion)[3]
 
-metricas.eqm <- calculo_de_metricas_de_desempenho(estaciones, eqm)
-metricas.pqm <- calculo_de_metricas_de_desempenho(estaciones, pqm)
-metricas.gpqm <- calculo_de_metricas_de_desempenho(estaciones, gpqm)
-metricas.loci <- calculo_de_metricas_de_desempenho(estaciones, loci)
-metricas.ptr <- calculo_de_metricas_de_desempenho(estaciones, ptr)
-metricas.qdm <- calculo_de_metricas_de_desempenho(estaciones, qdm)
-metricas.era5 <- calculo_de_metricas_de_desempenho(estaciones, era5)
+metricas.eqm <- calculo_de_metricas_de_desempenho(estaciones, eqm, estacion = estacion.de.interes)
+metricas.pqm <- calculo_de_metricas_de_desempenho(estaciones, pqm, estacion = estacion.de.interes)
+metricas.gpqm <- calculo_de_metricas_de_desempenho(estaciones, gpqm, estacion = estacion.de.interes)
+metricas.loci <- calculo_de_metricas_de_desempenho(estaciones, loci, estacion = estacion.de.interes)
+metricas.ptr <- calculo_de_metricas_de_desempenho(estaciones, ptr, estacion = estacion.de.interes)
+metricas.qdm <- calculo_de_metricas_de_desempenho(estaciones, qdm, estacion = estacion.de.interes)
+metricas.era5 <- calculo_de_metricas_de_desempenho(estaciones, era5, estacion = estacion.de.interes)
 
 metricas.eqm
 metricas.pqm
@@ -31,3 +33,4 @@ metricas.loci
 metricas.ptr
 metricas.qdm
 metricas.era5
+

@@ -3,6 +3,7 @@ dev.off()
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 source('funcion_db_a_formato_ts.R')
+source('funcion_homogenizacion_entre_db_observado_y_simulado.R')
 
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
@@ -16,17 +17,34 @@ ptr <- read.csv('ptr.csv') ; summary(ptr$valor)
 qdm <- read.csv('qdm.csv') ; summary(qdm$valor)
 era5 <- read.csv('era5.csv') ; summary(era5$valor)
 
-estaciones.ts <- db_a_formato_ts(estaciones, calculo_diario = sum, calculo_mensual = mean)
-eqm.ts <- db_a_formato_ts(eqm, calculo_diario = sum, calculo_mensual = mean)
-pqm.ts <- db_a_formato_ts(pqm, calculo_diario = sum, calculo_mensual = mean)
-gpqm.ts <- db_a_formato_ts(gpqm, calculo_diario = sum, calculo_mensual = mean)
-loci.ts <- db_a_formato_ts(loci, calculo_diario = sum, calculo_mensual = mean)
-ptr.ts <- db_a_formato_ts(ptr, calculo_diario = sum, calculo_mensual = mean)
-qdm.ts <- db_a_formato_ts(qdm, calculo_diario = sum, calculo_mensual = mean)
-era5.ts <- db_a_formato_ts(era5, calculo_diario = sum, calculo_mensual = mean)
+unique(eqm$nombre_estacion)
+estacion.de.interes <- unique(eqm$nombre_estacion)[3] ; estacion.de.interes
+        
+estaciones.ts <- db_a_formato_ts(estaciones, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
 
-valor.maximo <- round(max(estaciones.ts, eqm.ts, pqm.ts, loci.ts, ptr.ts, qdm.ts, era5.ts), 0)+1
+eqm.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, eqm, estacion = estacion.de.interes)
+eqm.ts <- db_a_formato_ts(eqm.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
 
+pqm.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, pqm, estacion = estacion.de.interes)
+pqm.ts <- db_a_formato_ts(pqm.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+gpqm.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, gpqm, estacion = estacion.de.interes)
+gpqm.ts <- db_a_formato_ts(gpqm.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+loci.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, loci, estacion = estacion.de.interes)
+loci.ts <- db_a_formato_ts(loci.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+ptr.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, ptr, estacion = estacion.de.interes)
+ptr.ts <- db_a_formato_ts(ptr.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+qdm.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, qdm, estacion = estacion.de.interes)
+qdm.ts <- db_a_formato_ts(qdm.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+era5.pre.ts <- homogenizacion_entre_db_observado_y_simulado(estaciones, era5, estacion = estacion.de.interes)
+era5.ts <- db_a_formato_ts(era5.pre.ts, estacion.de.interes, calculo_diario = sum, calculo_mensual = mean)
+
+valor.maximo <- round(max(estaciones.ts, eqm.ts, pqm.ts, loci.ts, ptr.ts, qdm.ts, era5.ts, na.rm=TRUE), 0)+1
+valor.maximo
 
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/plots/')
@@ -201,3 +219,4 @@ legend('topright', legend = c('Observado', 'ERA5', 'QDM'), lty = c(1,1,2), lwd=c
 dev.off()
 
 # fin ---
+
