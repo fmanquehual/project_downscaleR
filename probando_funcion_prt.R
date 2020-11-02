@@ -1,12 +1,7 @@
-library(loadeR)
-library(visualizeR)
-library(downscaleR)
-# nls() # para regresion no lineal
-
-
 rm(list=ls())
 dev.off()
 
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 source('funcion_prt.R')
 
 observado <- rnorm(n=65, mean=5, sd=1)
