@@ -26,3 +26,22 @@ lines(simulados, type='l', lwd=1, lty=2, col='red')
 lines(correccion, type='l', lwd=1, lty=2, col='green')
 lines(correccion2, type='l', lwd=1, lty=2, col='blue')
 
+# Funcion de poder
+
+
+funcion_de_poder <- function(c,d,H){c*(H^d)}
+
+a.i <- sample(seq(5,10, 0.01), 100) ; length(a.i)
+H.i <- sample(1:1000, 100); length(H.i)
+
+modelo_de_poder <- nls(a.i~funcion_de_poder(c.i, d.i, H.i))
+c <- coefficients(modelo_de_poder)[1]
+d <- coefficients(modelo_de_poder)[2]
+
+a.ajustado <- funcion_de_poder(c, d, 1:1000)
+
+plot(a.i~H.i, xlim=c(0, 1000), ylim=c(0, 15))
+lines(a.ajustado, col='red', lwd=2)
+
+mean(a.i-a.ajustado)
+
