@@ -3,7 +3,7 @@ library(Metrics)
 calculo_de_metricas_de_desempenho <- function(db_observado, db_simulado, estacion=NULL, precision=2){
   
   # db_observado <- estaciones
-  # db_simulado <- gpqm
+  # db_simulado <- ptr
   # estacion <- estacion.de.interes
   
   if(is.null(estacion)){warning('Debes indicar la estacion')}
@@ -28,9 +28,9 @@ calculo_de_metricas_de_desempenho <- function(db_observado, db_simulado, estacio
   # simulado
   id_elementos_con_NA <- which(is.na(db_simulado_depurado0$valor))
   
-  if(length(id_elementos_con_NA)==0){db_simulado_depurado <- db_simulado
+  if(length(id_elementos_con_NA)==0){db_simulado_depurado <- db_simulado_depurado0
   } else(c(
-    db_simulado_depurado <- db_simulado[-id_elementos_con_NA,],
+    db_simulado_depurado <- db_simulado_depurado0[-id_elementos_con_NA,],
     fechas.a.evaluar <- db_simulado_depurado$fecha,
     db_observado_depurado <- db_observado_depurado[db_observado_depurado$fecha%in%fechas.a.evaluar,] ))
   
@@ -39,6 +39,9 @@ calculo_de_metricas_de_desempenho <- function(db_observado, db_simulado, estacio
   
   valores_observados <- db_observado_depurado$valor
   valores_simulados <- db_simulado_depurado$valor
+  
+  length(valores_observados)
+  length(valores_simulados)
   
   rmse <- rmse(actual = valores_observados, predicted = valores_simulados)
   mae <- mae(actual = valores_observados, predicted = valores_simulados)

@@ -1,8 +1,6 @@
 library(loadeR)
 library(visualizeR)
 library(downscaleR)
-library(climate4R.climdex)
-library(climate4R.value)
 library(convertR)
 
 rm(list=ls())
@@ -19,7 +17,8 @@ source('funcion_prt.R')
 
 # Funciones ----
 
-loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=FALSE, es.cmip6=FALSE, anhos=anhos.entrenamiento){
+loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=FALSE, 
+                                       es.cmip6=FALSE, anhos=anhos.entrenamiento){
   
   if(es.precipitacion==TRUE){estadistico.i <- 'sum'} else(estadistico.i <- 'mean')
   if(es.cmip6==TRUE){extension.i <- c(1, -1)} else(extension.i <- c(0, 0))
@@ -43,8 +42,8 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 
 # Parametros ----
 
-anhos.entrenamiento <- 1979:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
-anhos.total <- 1979:2017
+anhos.entrenamiento <- 1995:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
+anhos.total <- 1995:2017
 # latitud <- c(-49,-36) # area de estudio CCR
 # longitud <- c(-75, -72) # area de estudio CCR
 latitud <- c(-48.5, -45.5) # area de estudio WRF
@@ -63,7 +62,8 @@ db.loci <- c()
 db.ptr <- c()
 db.qdm <- c()
 db.era5 <- c()
-
+a <- c()
+b <- c()
 tz.i <- 'GMT'
 
 # fin ---
@@ -74,8 +74,8 @@ tz.i <- 'GMT'
 
 # Correccion mensual ----
 
-# for (i in 1:12) {
-  i <- 1
+for (i in 1) {
+#  i <- 1
   
   mensaje.inicio <- paste('Inicio de proceso con mes', i, '--------------------------------------------------------------')
   message(mensaje.inicio)
@@ -181,26 +181,30 @@ tz.i <- 'GMT'
                                          wet.threshold=umbral)
   
   ####################
-  raster.pr.sum.entrenamiento <- stack(grid2sp(pr.sum.entrenamiento))
-  raster.pr.sum.entrenamiento.1 <- extract(raster.pr.sum.entrenamiento, estaciones$xyCoords[1,])
   
-  raster.pr.sum.total <- stack(grid2sp(pr.sum.total))
-  raster.pr.sum.total.1 <- extract(raster.pr.sum.total, estaciones$xyCoords[1,])
+  numero.de.estaciones <- length(estaciones$Metadata$name)
   
-  pr.sum.corregido.ptr_2 <- ptr(o=estaciones$Data[,1], 
-                                p=raster.pr.sum.entrenamiento.1, 
-                                s=raster.pr.sum.total.1, 
-                                precip = TRUE)
+  for (i in 1:numero.de.estaciones) {
+    
+    nombre.estacion.i <- estaciones$Metadata$name[i]
+    mensaje <- paste0("Extrayendo 'a' y 'b' de la estacion ", nombre.estacion.i, ' (', i, ' de ', numero.de.estaciones, ')') 
+    message(mensaje)
+    
+    raster.pr.sum.entrenamiento <- stack(grid2sp(pr.sum.entrenamiento))
+    raster.pr.sum.entrenamiento.1 <- extract(raster.pr.sum.entrenamiento, estaciones$xyCoords[i,])
+    
+    raster.pr.sum.total <- stack(grid2sp(pr.sum.total))
+    raster.pr.sum.total.1 <- extract(raster.pr.sum.total, estaciones$xyCoords[i,])
+    
+    a.i <- ptr(o=estaciones$Data[,i], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, 
+               precip = TRUE, entregar_a = TRUE)
+    b.i <- ptr(o=estaciones$Data[,i], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, 
+               precip = TRUE, entregar_b = TRUE)
   
-  length(pr.sum.corregido.ptr$Data[,1])
-  dim(pr.sum.corregido.ptr_2)
+    a <- c(a, a.i)
+    b <- c(b, b.i)
+  }
   
-  plot(estaciones$Data[500:540], type='l')
-  lines(pr.sum.corregido.ptr$Data[500:540,1], col='blue')
-  lines(pr.sum.corregido.ptr_2[500:540], col='red')
-  
-  a <- ptr(o=estaciones$Data[,1], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, precip = TRUE, entregar_a = TRUE)
-  b <- ptr(o=estaciones$Data[,1], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, precip = TRUE, entregar_b = TRUE)
   
   ############################################################################################################
   ############################################################################################################
@@ -252,4 +256,298 @@ tz.i <- 'GMT'
   db.era5 <- rbind(db.era5, db.era5.preliminar)
   
   # fin ---
-# }
+}
+
+
+
+
+# ajustando modelos de correcion ----
+
+
+# Quitando NA
+a.original <- a ; a.original
+b.original <- b ; b.original
+H.original <- estaciones$Metadata$altitude ; H.original
+
+
+id.valores.NA <- which(is.na(a.original))
+a <- a.original[-id.valores.NA]
+b <- b.original[-id.valores.NA]
+H <- H.original[-id.valores.NA]
+log.a <- log(a)
+log.b <- log(b)
+
+db <- data.frame(a=a, b=b, H=H, log.a=log.a, log.b=log.b)
+
+
+# Ajustando modelo lineal
+
+funcion_ln <- function(c.i,d.i,H.i){ y <- log(c.i)+log(H.i)*d.i
+                                     return(y) }
+
+modelo.ln.a <- nls(log.a~funcion_ln(c, d, H),
+                   data = db,
+                   start = c(c=0.1, d=0.1))
+
+summary(modelo.ln.a)
+c.ln.a <- coefficients(modelo.ln.a)[1]
+d.ln.a <- coefficients(modelo.ln.a)[2]
+
+
+modelo.ln.b <- nls(log.b~funcion_ln(c, d, H),
+                   data = db,
+                   start = c(c=0.1, d=0.1))
+
+summary(modelo.ln.b)
+c.ln.b <- coefficients(modelo.ln.b)[1]
+d.ln.b <- coefficients(modelo.ln.b)[2]
+
+db$log.a.estimado <- funcion_ln(c.ln.a, d.ln.a, db$H)
+db$log.b.estimado <- funcion_ln(c.ln.b, d.ln.b, db$H)
+
+head(db)
+
+plot(db$log.a, type='l', lwd=2)
+lines(db$log.a.estimado, col='red', lwd=2)
+
+plot(db$log.b, type='l', lwd=2)
+lines(db$log.b.estimado, col='red', lwd=2)
+
+
+# Ajustando modelo de poder
+
+funcion_de_poder <- function(c.i,d.i,H.i){ y <- c.i*(H.i^d.i)
+                                     return(y) }
+
+modelo.a <- nls(a ~ funcion_de_poder(c, d, H),
+                data = db,
+                start = c(c=0.1, d=0.1))
+
+summary(modelo.a)
+c.a <- coefficients(modelo.a)[1]
+d.a <- coefficients(modelo.a)[2]
+
+
+modelo.b <- nls(b ~ funcion_de_poder(c, d, H),
+                data = db,
+                start = c(c=0.1, d=0.1))
+
+summary(modelo.b)
+c.b <- coefficients(modelo.b)[1]
+d.b <- coefficients(modelo.b)[2]
+
+db$a.estimado <- funcion_de_poder(c.a, d.a, db$H)
+db$b.estimado <- funcion_de_poder(c.b, d.b, db$H)
+
+head(db)
+
+plot(db$a, type='l', lwd=2)
+lines(db$a.estimado, col='red', lwd=2)
+
+plot(db$b, type='l', lwd=2)
+lines(db$b.estimado, col='red', lwd=2)
+
+# fin ---
+
+
+
+
+# Evaluando modelos ----
+
+db$residual.de.a <- db$a-db$a.estimado
+db$residual.de.log.a <- db$log.a-db$log.a.estimado
+
+db$residual.de.b <- db$b-db$b.estimado
+db$residual.de.log.b <- db$log.b-db$log.b.estimado
+
+# significancia
+summary(modelo.a)
+summary(modelo.ln.a)
+
+summary(modelo.b)
+summary(modelo.ln.b)
+
+
+# plots de residuales
+par(mfrow=c(2,2))
+
+plot(db$residual.de.a)
+abline(h=0, col='red')
+
+plot(db$residual.de.log.a)
+abline(h=0, col='red')
+
+plot(db$residual.de.b)
+abline(h=0, col='red')
+
+plot(db$residual.de.log.b)
+abline(h=0, col='red')
+
+# fin ---
+
+
+
+
+# Preparando db para correcion ----
+
+nombre.estaciones <- estaciones$Metadata$name
+altitud.estaciones <- estaciones$Metadata$altitude
+db.altitud <- data.frame(nombre_estacion=nombre.estaciones, altitud=altitud.estaciones)
+
+db.era5$id <- paste(db.era5$fecha, db.era5$nombre_estacion, sep='_')
+db.era5 <- db.era5[,c('id', 'valor')]
+colnames(db.era5)[2] <- 'valor.simulado'
+
+db.ptr$id <- paste(db.ptr$fecha, db.ptr$nombre_estacion, sep='_')
+db.ptr <- db.ptr[,c('id', 'valor')]
+colnames(db.ptr)[2] <- 'valor.ptr'
+
+db.estaciones$id <- paste(db.estaciones$fecha, db.estaciones$nombre_estacion, sep='_')
+
+db.estaciones.y.era5 <- merge(db.estaciones, db.era5, by='id')
+db.estaciones.era5.y.ptr <- merge(db.estaciones.y.era5, db.ptr, by='id')
+db.estaciones.era5.y.ptr <- db.estaciones.era5.y.ptr[,-1]
+
+db.estaciones.y.era5 <- merge(db.estaciones.era5.y.ptr, db.altitud, by='nombre_estacion')
+
+head(db.estaciones.y.era5)
+
+# fin ---
+
+
+
+
+# Correccion a nivel de estacion ----
+
+db.estaciones.y.era5$a <- funcion_de_poder(c.a, d.a, db.estaciones.y.era5$altitud)
+db.estaciones.y.era5$b <- funcion_de_poder(c.b, d.b, db.estaciones.y.era5$altitud)
+db.estaciones.y.era5$ln.a <- funcion_ln(c.ln.a, d.ln.a, db.estaciones.y.era5$altitud)
+db.estaciones.y.era5$ln.b <- funcion_ln(c.ln.b, d.ln.b, db.estaciones.y.era5$altitud)
+
+head(db.estaciones.y.era5)
+dim(db.estaciones.y.era5)
+
+db.estaciones.y.era5$valor.simulado.corregido <- db.estaciones.y.era5$a*(db.estaciones.y.era5$valor.simulado^db.estaciones.y.era5$b)
+db.estaciones.y.era5$valor.simulado.ln.corregido <- db.estaciones.y.era5$ln.a*(db.estaciones.y.era5$valor.simulado^db.estaciones.y.era5$ln.b)
+
+head(db.estaciones.y.era5)
+dim(db.estaciones.y.era5)
+
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+# write.csv(db.estaciones.y.era5, 'ejemplo_bias_correcion_por_estacion_con_modelos_enero.csv', row.names = FALSE)
+
+# plot
+
+nombre.estaciones
+db.subset <- subset(db.estaciones.y.era5, nombre_estacion==nombre.estaciones[1])
+rango.de.valores <- 500:550
+
+# par(mfrow=c(2,1))
+valor.maximo <- max(db.subset$valor.simulado.corregido[rango.de.valores])
+
+plot(db.subset$valor[rango.de.valores], type='l', lwd=2, ylim=c(0, valor.maximo))
+lines(db.subset$valor.simulado[rango.de.valores], col='red', lwd=2)
+lines(db.subset$valor.ptr[rango.de.valores], col='green', lwd=2)
+lines(db.subset$valor.simulado.corregido[rango.de.valores], col='blue', lwd=2)
+
+legend('topright', legend = c('Observado', 'ERA5', 'PTR', 'Modelo de poder'), 
+       lwd=c(2,2,2,2), 
+       col = c('black', 'red', 'green', 'blue'))
+
+# plot(db.estaciones.y.era5$valor[rango.de.valores], type='l', lwd=2)
+# lines(db.estaciones.y.era5$valor.simulado[rango.de.valores], col='red', lwd=2)
+# lines(db.estaciones.y.era5$valor.ptr[rango.de.valores], col='green', lwd=2)
+# lines(db.estaciones.y.era5$valor.simulado.ln.corregido[rango.de.valores], col='blue', lwd=2)
+
+# fin ---
+
+
+
+
+# Correcion a nivel de grilla ----
+
+pr.sum.corregido0 <- pr.sum.total.original
+pr.sum.corregido <- pr.sum.total.original
+
+numero.de.matrices <- dim(pr.sum.corregido0$Data)[1]
+pr.sum.corregido0$Data[1,,]
+
+# pr.sum.corregido0$Data[1,,] <- pr.sum.corregido0$Data[1,,]
+
+raster.pr.sum.corregido0 <- grid2sp(pr.sum.corregido0)
+raster.pr.sum.corregido0 <- stack(raster.pr.sum.corregido0)
+plot(raster.pr.sum.corregido0, 1)
+
+setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
+dem <- raster('dem3_clip_para_mapas.tif')
+# plot(dem)
+
+dem.clip <- crop(dem, raster.pr.sum.corregido0)
+plot(dem.clip)
+
+dem.clip.resemple <- resample(dem.clip, raster.pr.sum.corregido0, method='bilinear')
+plot(dem.clip.resemple)
+
+matriz.altitud <- as.matrix(dem.clip.resemple)
+
+####
+
+
+for (i in 1:numero.de.matrices) {
+  
+  matriz.i <- pr.sum.corregido0$Data[i,,]
+  
+  for (j in 1:nrow(matriz.i)) {
+      
+    for (k in 1:ncol(matriz.i)){
+      
+      precipitacion.i <- matriz.i[j,k]
+      altitud.i <- matriz.altitud[j,k]
+      
+      a.i <- funcion_de_poder(c.a, d.a, altitud.i)
+      b.i <- funcion_de_poder(c.b, d.b, altitud.i)
+      
+      precipitacion.corregido.i <- a.i*(precipitacion.i^b.i)
+      matriz.i[j,k] <- precipitacion.corregido.i
+    
+    }
+      
+  }
+  
+  pr.sum.corregido0$Data[i,,] <- matriz.i
+  
+}
+
+pr.sum.corregido$Data <- pr.sum.corregido0$Data
+pr.sum.corregido
+
+era5.corregido <- grid2sp(pr.sum.corregido)
+db.era5.corregido <- grilla_a_db(era5.corregido, estaciones)
+
+head(db.era5.corregido)
+head(db.estaciones.y.era5)
+
+#######
+
+raster.era5.corregido <- stack(era5.corregido)
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/plots/')
+
+png('mapa_altitud_era5Original_era5Corregida.png', width = 780, height = 780, units = "px")
+par(mfrow=c(3,3))
+
+plot(dem.clip.resemple, main='Altitud')
+plot(raster.pr.sum.corregido0, 1, main='01/01/1995 ERA5')
+plot(raster.era5.corregido, 1, main='01/01/1995 ERA5-CORREGIDO')
+
+plot(dem.clip.resemple, main='Altitud')
+plot(raster.pr.sum.corregido0, 15, main='15/01/1995 ERA5')
+plot(raster.era5.corregido, 15, main='15/01/1995 ERA5-CORREGIDO')
+
+plot(dem.clip.resemple, main='Altitud')
+plot(raster.pr.sum.corregido0, 30, main='30/01/1995 ERA5')
+plot(raster.era5.corregido, 30, main='30/01/1995 ERA5-CORREGIDO')
+
+dev.off()
+
+# fin ---

@@ -16,7 +16,7 @@ qdm <- read.csv('qdm.csv') ; summary(qdm$valor)
 era5 <- read.csv('era5.csv') ; summary(era5$valor)
 
 unique(eqm$nombre_estacion)
-estacion.de.interes <- unique(eqm$nombre_estacion)[3]
+estacion.de.interes <- unique(eqm$nombre_estacion)[1]
 
 metricas.eqm <- calculo_de_metricas_de_desempenho(estaciones, eqm, estacion = estacion.de.interes)
 metricas.pqm <- calculo_de_metricas_de_desempenho(estaciones, pqm, estacion = estacion.de.interes)

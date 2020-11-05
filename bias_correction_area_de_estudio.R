@@ -43,8 +43,8 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 
 # Parametros ----
 
-anhos.entrenamiento <- 1979:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
-anhos.total <- 1979:2017
+anhos.entrenamiento <- 1995:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
+anhos.total <- 1995:2017
 # latitud <- c(-49,-36) # area de estudio CCR
 # longitud <- c(-75, -72) # area de estudio CCR
 latitud <- c(-48.5, -45.5) # area de estudio WRF
