@@ -2,9 +2,13 @@ library(loadeR)
 library(visualizeR)
 library(downscaleR)
 library(convertR)
+library(lattice)
 
 rm(list=ls())
 dev.off()
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_agua/proyecto_agua_en_R/')
+source('funcion_nombre_de_columnas_a_fechas.R')
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 source('funcion_lista_climate4R_a_db.R')
@@ -13,6 +17,9 @@ source('funcion_nuevas_fechas.R')
 source('funcion_formato_datos_para_climate4R.R')
 source('funcion_ordenar_por_fecha.R')
 source('funcion_prt.R')
+source('funcion_generador_de_fechas.R')
+source('funcion_bloque_de_dias.R')
+source('funcion_ptr_por_bloque.R')
 
 
 # Funciones ----
@@ -54,16 +61,13 @@ umbral <- 1 # The minimum value that is considered as a non-zero precipitation (
 # Con el umbral=0, da problemas en gpqm (valores muy altos, al final la correcion empeora la estimacion de pp)
 # Las correciones mejoran bastante cuando el umbral es 1 (default).
 
+dias_del_bloque <- 5 
+buffer <- 30
+
 db.estaciones <- c()
-db.eqm <- c()
-db.pqm <- c()
-db.gpqm <- c() # ver apunte del cuaderno!
-db.loci <- c()
 db.ptr <- c()
-db.qdm <- c()
 db.era5 <- c()
-a <- c()
-b <- c()
+db.parametros <- c()
 tz.i <- 'GMT'
 
 # fin ---
@@ -74,8 +78,8 @@ tz.i <- 'GMT'
 
 # Correccion mensual ----
 
-for (i in 1) {
-#  i <- 1
+# for (i in 1) {
+i <- 1:12
   
   mensaje.inicio <- paste('Inicio de proceso con mes', i, '--------------------------------------------------------------')
   message(mensaje.inicio)
@@ -173,58 +177,32 @@ for (i in 1) {
   
   message('Corrigiendo sesgo con metodo PTR')
   
-  pr.sum.corregido.ptr <- biasCorrection(x=pr.sum.entrenamiento,
-                                         y = estaciones,
-                                         newdata = pr.sum.total,
-                                         precipitation = TRUE,
-                                         method = "ptr",
-                                         wet.threshold=umbral)
-  
-  ####################
-  
   numero.de.estaciones <- length(estaciones$Metadata$name)
   
   for (i in 1:numero.de.estaciones) {
+    # i <- 1
     
     nombre.estacion.i <- estaciones$Metadata$name[i]
-    mensaje <- paste0("Extrayendo 'a' y 'b' de la estacion ", nombre.estacion.i, ' (', i, ' de ', numero.de.estaciones, ')') 
+    mensaje <- paste0("Extrayendo 'a' y 'b' de la estacion ", nombre.estacion.i, 
+                      ' (', i, ' de ', numero.de.estaciones, ')') 
     message(mensaje)
     
-    raster.pr.sum.entrenamiento <- stack(grid2sp(pr.sum.entrenamiento))
-    raster.pr.sum.entrenamiento.1 <- extract(raster.pr.sum.entrenamiento, estaciones$xyCoords[i,])
+    raster.pr.sum.entrenamiento0 <- stack(grid2sp(pr.sum.entrenamiento))
+    raster.pr.sum.entrenamiento <- extract(raster.pr.sum.entrenamiento0, estaciones$xyCoords[i,])
     
-    raster.pr.sum.total <- stack(grid2sp(pr.sum.total))
-    raster.pr.sum.total.1 <- extract(raster.pr.sum.total, estaciones$xyCoords[i,])
+    raster.pr.sum.total0 <- stack(grid2sp(pr.sum.total))
+    raster.pr.sum.total <- extract(raster.pr.sum.total0, estaciones$xyCoords[i,])
     
-    a.i <- ptr(o=estaciones$Data[,i], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, 
-               precip = TRUE, entregar_a = TRUE)
-    b.i <- ptr(o=estaciones$Data[,i], p=raster.pr.sum.entrenamiento.1, s=raster.pr.sum.total.1, 
-               precip = TRUE, entregar_b = TRUE)
+    db.fechas.por.bloque <- bloque_de_dias(estaciones, raster.pr.sum.entrenamiento, 
+                                           raster.pr.sum.total, dias_del_bloque = dias_del_bloque, 
+                                           buffer = buffer)
+    
+    db.parametros0 <- ptr_por_bloque(db.fechas.por.bloque, estaciones, raster.pr.sum.entrenamiento,
+                                     raster.pr.sum.total, i)
   
-    a <- c(a, a.i)
-    b <- c(b, b.i)
+    db.parametros <- rbind(db.parametros, db.parametros0)
   }
   
-  
-  ############################################################################################################
-  ############################################################################################################
-  
-  
-  if(i>1){c(
-    pr.sum.corregido.ptr$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
-                                                                       entregar_fecha_inicio = TRUE, 
-                                                                       iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum.corregido.ptr$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
-                                                                     entregar_fecha_inicio = FALSE, 
-                                                                     iteracion = i, tz=tz.i)[1])),
-    
-    pr.sum.corregido.ptr$Data <- formato_datos_para_climate4R(pr.sum.corregido.ptr, pr.sum.total.original,
-                                                              entregar_fecha_inicio = TRUE,
-                                                              iteracion = i, tz=tz.i) )}
-  
-  db.ptr.preliminar <- lista_climate4R_a_db(pr.sum.corregido.ptr)
-  db.ptr <- rbind(db.ptr, db.ptr.preliminar)
   
   
   # Valores observados ----
@@ -256,96 +234,71 @@ for (i in 1) {
   db.era5 <- rbind(db.era5, db.era5.preliminar)
   
   # fin ---
-}
+  
+# }
 
 
 
 
 # ajustando modelos de correcion ----
 
+bloques <- unique(db.parametros$bloque)
+  
+db <- c()
+for (i in bloques) {
+  # i <- 1    
+  
+  db.parametros.i <- subset(db.parametros, bloque==i)
+  
+  # Quitando NA
+  a.original <- db.parametros.i$a ; a.original
+  b.original <- db.parametros.i$b ; b.original
+  H.original <- estaciones$Metadata$altitude ; H.original
+  
+  
+  id.valores.NA <- which(is.na(a.original))
+  a <- a.original[-id.valores.NA]
+  b <- b.original[-id.valores.NA]
+  H <- H.original[-id.valores.NA]
+  
+  db0 <- data.frame(a=a, b=b, H=H)
+  
+  
+  # Ajustando modelo de poder
+  
+  funcion_de_poder <- function(c.i,d.i,H.i){ y <- c.i*(H.i^d.i)
+                                       return(y) }
+  
+  modelo.a <- nls(a ~ funcion_de_poder(c, d, H),
+                  data = db0,
+                  start = c(c=0.1, d=0.1))
+  
+  c.a <- coefficients(modelo.a)[1]
+  d.a <- coefficients(modelo.a)[2]
+  
+  
+  modelo.b <- nls(b ~ funcion_de_poder(c, d, H),
+                  data = db0,
+                  start = c(c=0.1, d=0.1))
+  
+  c.b <- coefficients(modelo.b)[1]
+  d.b <- coefficients(modelo.b)[2]
+  
+  db0$a.estimado <- funcion_de_poder(c.a, d.a, db0$H)
+  db0$b.estimado <- funcion_de_poder(c.b, d.b, db0$H)
+  db0$bloque <- i
 
-# Quitando NA
-a.original <- a ; a.original
-b.original <- b ; b.original
-H.original <- estaciones$Metadata$altitude ; H.original
-
-
-id.valores.NA <- which(is.na(a.original))
-a <- a.original[-id.valores.NA]
-b <- b.original[-id.valores.NA]
-H <- H.original[-id.valores.NA]
-log.a <- log(a)
-log.b <- log(b)
-
-db <- data.frame(a=a, b=b, H=H, log.a=log.a, log.b=log.b)
-
-
-# Ajustando modelo lineal
-
-funcion_ln <- function(c.i,d.i,H.i){ y <- log(c.i)+log(H.i)*d.i
-                                     return(y) }
-
-modelo.ln.a <- nls(log.a~funcion_ln(c, d, H),
-                   data = db,
-                   start = c(c=0.1, d=0.1))
-
-summary(modelo.ln.a)
-c.ln.a <- coefficients(modelo.ln.a)[1]
-d.ln.a <- coefficients(modelo.ln.a)[2]
-
-
-modelo.ln.b <- nls(log.b~funcion_ln(c, d, H),
-                   data = db,
-                   start = c(c=0.1, d=0.1))
-
-summary(modelo.ln.b)
-c.ln.b <- coefficients(modelo.ln.b)[1]
-d.ln.b <- coefficients(modelo.ln.b)[2]
-
-db$log.a.estimado <- funcion_ln(c.ln.a, d.ln.a, db$H)
-db$log.b.estimado <- funcion_ln(c.ln.b, d.ln.b, db$H)
-
+  db <- rbind(db, db0)
+}
+  
 head(db)
+db$bloque <- factor(db$bloque, levels = 1:73)
 
-plot(db$log.a, type='l', lwd=2)
-lines(db$log.a.estimado, col='red', lwd=2)
+xyplot(a~H | bloque, data=db, type=c('p', 'g', 'smooth'),
+       main="Parametro 'a' vs altitud de cada bloque") # Show points ("p"), grids ("g") and smoothing line
 
-plot(db$log.b, type='l', lwd=2)
-lines(db$log.b.estimado, col='red', lwd=2)
-
-
-# Ajustando modelo de poder
-
-funcion_de_poder <- function(c.i,d.i,H.i){ y <- c.i*(H.i^d.i)
-                                     return(y) }
-
-modelo.a <- nls(a ~ funcion_de_poder(c, d, H),
-                data = db,
-                start = c(c=0.1, d=0.1))
-
-summary(modelo.a)
-c.a <- coefficients(modelo.a)[1]
-d.a <- coefficients(modelo.a)[2]
-
-
-modelo.b <- nls(b ~ funcion_de_poder(c, d, H),
-                data = db,
-                start = c(c=0.1, d=0.1))
-
-summary(modelo.b)
-c.b <- coefficients(modelo.b)[1]
-d.b <- coefficients(modelo.b)[2]
-
-db$a.estimado <- funcion_de_poder(c.a, d.a, db$H)
-db$b.estimado <- funcion_de_poder(c.b, d.b, db$H)
-
-head(db)
-
-plot(db$a, type='l', lwd=2)
-lines(db$a.estimado, col='red', lwd=2)
-
-plot(db$b, type='l', lwd=2)
-lines(db$b.estimado, col='red', lwd=2)
+xyplot(b~H | bloque, data=db, type=c('p', 'g', 'smooth'),
+       main="Parametro 'b' vs altitud de cada bloque")
 
 # fin ---
 
@@ -355,33 +308,27 @@ lines(db$b.estimado, col='red', lwd=2)
 # Evaluando modelos ----
 
 db$residual.de.a <- db$a-db$a.estimado
-db$residual.de.log.a <- db$log.a-db$log.a.estimado
-
 db$residual.de.b <- db$b-db$b.estimado
-db$residual.de.log.b <- db$log.b-db$log.b.estimado
 
 # significancia
-summary(modelo.a)
-summary(modelo.ln.a)
 
+summary(modelo.a)
 summary(modelo.b)
-summary(modelo.ln.b)
 
 
 # plots de residuales
-par(mfrow=c(2,2))
 
 plot(db$residual.de.a)
-abline(h=0, col='red')
-
-plot(db$residual.de.log.a)
 abline(h=0, col='red')
 
 plot(db$residual.de.b)
 abline(h=0, col='red')
 
-plot(db$residual.de.log.b)
-abline(h=0, col='red')
+histogram(~residual.de.a | bloque, data=db,
+       main="Residuales parametro 'a' de cada bloque")
+
+histogram(~residual.de.b | bloque, data=db,
+       main="Residuales parametro 'b' de cada bloque")
 
 # fin ---
 
@@ -394,21 +341,10 @@ nombre.estaciones <- estaciones$Metadata$name
 altitud.estaciones <- estaciones$Metadata$altitude
 db.altitud <- data.frame(nombre_estacion=nombre.estaciones, altitud=altitud.estaciones)
 
-db.era5$id <- paste(db.era5$fecha, db.era5$nombre_estacion, sep='_')
-db.era5 <- db.era5[,c('id', 'valor')]
-colnames(db.era5)[2] <- 'valor.simulado'
-
-db.ptr$id <- paste(db.ptr$fecha, db.ptr$nombre_estacion, sep='_')
-db.ptr <- db.ptr[,c('id', 'valor')]
-colnames(db.ptr)[2] <- 'valor.ptr'
-
 db.estaciones$id <- paste(db.estaciones$fecha, db.estaciones$nombre_estacion, sep='_')
 
-db.estaciones.y.era5 <- merge(db.estaciones, db.era5, by='id')
-db.estaciones.era5.y.ptr <- merge(db.estaciones.y.era5, db.ptr, by='id')
-db.estaciones.era5.y.ptr <- db.estaciones.era5.y.ptr[,-1]
-
-db.estaciones.y.era5 <- merge(db.estaciones.era5.y.ptr, db.altitud, by='nombre_estacion')
+db.estaciones.y.era5.preliminar <- merge(db.estaciones, db.era5, by='id')
+db.estaciones.y.era5 <- merge(db.estaciones.y.era5.preliminar, db.altitud, by='nombre_estacion')
 
 head(db.estaciones.y.era5)
 
@@ -421,14 +357,11 @@ head(db.estaciones.y.era5)
 
 db.estaciones.y.era5$a <- funcion_de_poder(c.a, d.a, db.estaciones.y.era5$altitud)
 db.estaciones.y.era5$b <- funcion_de_poder(c.b, d.b, db.estaciones.y.era5$altitud)
-db.estaciones.y.era5$ln.a <- funcion_ln(c.ln.a, d.ln.a, db.estaciones.y.era5$altitud)
-db.estaciones.y.era5$ln.b <- funcion_ln(c.ln.b, d.ln.b, db.estaciones.y.era5$altitud)
 
 head(db.estaciones.y.era5)
 dim(db.estaciones.y.era5)
 
 db.estaciones.y.era5$valor.simulado.corregido <- db.estaciones.y.era5$a*(db.estaciones.y.era5$valor.simulado^db.estaciones.y.era5$b)
-db.estaciones.y.era5$valor.simulado.ln.corregido <- db.estaciones.y.era5$ln.a*(db.estaciones.y.era5$valor.simulado^db.estaciones.y.era5$ln.b)
 
 head(db.estaciones.y.era5)
 dim(db.estaciones.y.era5)
