@@ -3,6 +3,7 @@ library(lubridate)
 db_a_formato_ts <- function(base_de_datos, estacion=NULL, calculo_diario=sum, calculo_mensual=mean){
   
   # base_de_datos <- eqm.pre.ts
+  # base_de_datos <- db.observado
   # estacion <- estacion.de.interes
   
   if(is.null(estacion)){warning('Debes indicar la estacion')}
@@ -58,14 +59,6 @@ db_a_formato_ts <- function(base_de_datos, estacion=NULL, calculo_diario=sum, ca
   # pasando a formato ts
   matriz <- matrix(base_de_datos_4$valor, nrow = nrow(base_de_datos_4), ncol = 1, byrow = TRUE)
   series.de.tiempo <- ts(data = matriz, frequency = 1)
-  
-  # str(ej, '%m')
-  # library(zoo)
-  # library(lubridate)
-  # 
-  # z <- read.zoo(base_de_datos_3, FUN = as.yearmon, format = '%m', aggregate = function(x) tail(x, 1))
-  # ej <- as.ts(z)
-  # class(ej)
   
   message('Listo')
   

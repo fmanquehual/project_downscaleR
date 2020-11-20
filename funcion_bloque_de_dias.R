@@ -1,18 +1,38 @@
 library(lubridate)
 
 bloque_de_dias <- function(datos_de_estaciones=NULL, datos_simulados_entrenamiento=NULL, 
-                           datos_simulados_total=NULL, dias_del_bloque=5, buffer=30){
+                           datos_simulados_total=NULL, dias_del_bloque=5, buffer=30,
+                           data_frame=FALSE){
   
   # datos_de_estaciones <- estaciones
-  # datos_simulados_entrenamiento <- raster.pr.sum.entrenamiento.1
-  # datos_simulados_total <- raster.pr.sum.total.1
+  # datos_simulados_entrenamiento <- raster.pr.sum.entrenamiento
+  # datos_simulados_total <- raster.pr.sum.total
+  
+  # datos_de_estaciones <- db.estaciones.y.era5
+  # datos_simulados_entrenamiento <- db.estaciones.y.era5
+  # datos_simulados_total <- db.estaciones.y.era5
   
   
   # Preparando datos de entrada ----
   
-  fechas.estaciones <- as.Date(datos_de_estaciones$Dates$start)
-  fechas.simulado.entrenamiento <- nombre_de_columnas_a_fechas(datos_simulados_entrenamiento)
-  fechas.simulado.total <- nombre_de_columnas_a_fechas(datos_simulados_total)
+  if(data_frame==FALSE){c(
+    
+    fechas.estaciones <- as.Date(datos_de_estaciones$Dates$start),
+    fechas.simulado.entrenamiento <- nombre_de_columnas_a_fechas(datos_simulados_entrenamiento),
+    fechas.simulado.total <- nombre_de_columnas_a_fechas(datos_simulados_total)
+    
+      )
+  
+    } else(c(
+      
+      fechas.estaciones <- as.Date(datos_de_estaciones$fecha),
+      fechas.simulado.entrenamiento <- as.Date(datos_de_estaciones$fecha),
+      fechas.simulado.total <- as.Date(datos_de_estaciones$fecha)
+  
+        )
+      
+      )
+  
   dias.del.bloque <- dias_del_bloque
   
   # fin ---
@@ -68,7 +88,7 @@ bloque_de_dias <- function(datos_de_estaciones=NULL, datos_simulados_entrenamien
   
   
   
-  # Generando db de donde se obtendran las fechas segun bloque, a partir de un id ----
+  # Generando db donde se obtendran las fechas segun bloque, a partir de un id ----
   
   cantidad.bloques.anual <- 365/dias.del.bloque
   db.anho.completo$bloque <- sort(rep(1:cantidad.bloques.anual, dias.del.bloque))
@@ -79,7 +99,7 @@ bloque_de_dias <- function(datos_de_estaciones=NULL, datos_simulados_entrenamien
   mes.y.dia.preliminar.2 <- db.anho.completo$mes.y.dia
   mes.y.dia.2 <- mes.y.dia.preliminar.2[-(335:365)]
   
-  mes.y.dia <- c(mes.y.dia.1, mes.y.dia.2)#, mes.y.dia.3)
+  mes.y.dia <- c(mes.y.dia.1, mes.y.dia.2)
   
   db.mes.y.dia_preliminar <- data.frame(mes_y_dia=mes.y.dia, id=1:length(mes.y.dia))
   db.mes.y.dia_complementario.1 <- data.frame(mes_y_dia=mes.y.dia.2[305:length(mes.y.dia.2)], id=-29:0)
@@ -94,9 +114,8 @@ bloque_de_dias <- function(datos_de_estaciones=NULL, datos_simulados_entrenamien
   
   # Generando db con fechas segun bloque ---- 
   
-  db.bloques <- c()
   for (i in 1:cantidad.bloques.anual) {
-    #i <- 66
+    #i <- 1
     
     bloque.i <- i
     
@@ -116,10 +135,20 @@ bloque_de_dias <- function(datos_de_estaciones=NULL, datos_simulados_entrenamien
     buffer.termino <- db.mes.y.dia$mes_y_dia[db.mes.y.dia$id%in%(id_mes.y.dia_bloque.termino+1):(id_mes.y.dia_bloque.termino+30)]
     
     mes.y.dia_bloque.i <- c(buffer.inicio, mes.y.dia_bloque, buffer.termino)
-    db.bloques0 <- data.frame(mes_y_dia=mes.y.dia_bloque.i, bloque=i)
     
-    db.bloques <- rbind(db.bloques, db.bloques0)
-  
+    if(i==1){c(
+      
+      db.bloques <- data.frame(mes_y_dia=mes.y.dia_bloque.i, bloque=i, bloque_sin_buffer=NA),
+      db.bloques$bloque_sin_buffer[db.bloques$mes_y_dia%in%mes.y.dia_bloque] <- i
+      
+    )
+      } else(c(
+                db.bloques0 <- data.frame(mes_y_dia=mes.y.dia_bloque.i, bloque=i, bloque_sin_buffer=NA),
+                db.bloques0$bloque_sin_buffer[db.bloques0$mes_y_dia%in%mes.y.dia_bloque] <- i,
+                db.bloques <- rbind(db.bloques, db.bloques0)
+        )
+      )
+    
   }
   
   # fin ---

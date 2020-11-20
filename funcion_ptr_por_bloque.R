@@ -6,13 +6,15 @@ ptr_por_bloque <- function(base_de_datos_fechas_segun_bloque, datos_de_estacione
   
   # base_de_datos_fechas_segun_bloque <- db.fechas.por.bloque
   # datos_de_estaciones <- estaciones
-  # datos_simulados_entrenamiento <- raster.pr.sum.entrenamiento.1
-  # datos_simulados_total <- raster.pr.sum.total.1
+  # datos_simulados_entrenamiento <- raster.pr.sum.entrenamiento
+  # datos_simulados_total <- raster.pr.sum.total
   # estacion <- 1
   
   bloques <- unique(base_de_datos_fechas_segun_bloque$bloque)
   db <- c()
   for (i in bloques) {
+    
+    # i <- 1
     
     mensaje.inicio <- paste0('Bloque ', i, ' de ', bloques[length(bloques)])
     message(mensaje.inicio)

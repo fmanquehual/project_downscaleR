@@ -1,8 +1,10 @@
 library(loadeR)
+library(loadeR.2nc)
 library(visualizeR)
 library(downscaleR)
 library(convertR)
 library(lattice)
+library(raster)
 
 rm(list=ls())
 dev.off()
@@ -78,19 +80,21 @@ tz.i <- 'GMT'
 
 # Correccion mensual ----
 
-# for (i in 1) {
-i <- 1:12
+for (j in 1) {
   
-  mensaje.inicio <- paste('Inicio de proceso con mes', i, '--------------------------------------------------------------')
+  mensaje.inicio <- paste('Inicio de proceso ', '--------------------------------------------------------------')
   message(mensaje.inicio)
   
-  meses <- i # con el año 2010, del 1 al 9no mes, corre bien todo
+  meses <- 1:12
   
   
   
   # Lectura de datos ----
   
   message('Leyendo datos de estaciones')
+  
+  
+  
   
   # Estaciones metereologicas
   
@@ -123,6 +127,8 @@ i <- 1:12
     estaciones$Dates$end <- as.vector(unlist(nuevas_fechas(estaciones, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
   
   # temporalPlot(estaciones, aggr.spatial = list(FUN = mean, na.rm = TRUE))
+  
+  
   
   
   # Predictors (ERA reanalisis) 
@@ -166,16 +172,14 @@ i <- 1:12
     pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = FALSE, 
                                                              datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])) )}
   
+  # fin ---
   
-  ############################################################################################################
-  ############################################################################################################
-  # EN ESTO ESTAS!!!
   
-  # hacerlo para todas las estaciones (loop)
   
-  # Metodo ptr
   
-  message('Corrigiendo sesgo con metodo PTR')
+  # Obteniendo parametros de metodo ptr ----
+  
+  message("Obteniendo parametro 'a' y 'b' de metodo PTR")
   
   numero.de.estaciones <- length(estaciones$Metadata$name)
   
@@ -202,6 +206,9 @@ i <- 1:12
   
     db.parametros <- rbind(db.parametros, db.parametros0)
   }
+  
+  # fin ---
+  
   
   
   
@@ -235,34 +242,32 @@ i <- 1:12
   
   # fin ---
   
-# }
+}
 
 
 
 
 # ajustando modelos de correcion ----
 
-bloques <- unique(db.parametros$bloque)
+nombre.estaciones <- estaciones$Metadata$name
+altitud.de.estaciones <- estaciones$Metadata$altitude
+db.estacion.altitud <- data.frame(nombre_estacion=nombre.estaciones, H=altitud.de.estaciones)
+
+db.parametros.con.altitud <- merge(db.parametros, db.estacion.altitud, by = 'nombre_estacion')
+head(db.parametros.con.altitud)
+
+bloques <- unique(db.parametros.con.altitud$bloque)
   
 db <- c()
 for (i in bloques) {
-  # i <- 1    
+  # i <- 1
   
-  db.parametros.i <- subset(db.parametros, bloque==i)
+  db.parametros.con.altitud.i <- subset(db.parametros.con.altitud, bloque==i)
   
   # Quitando NA
-  a.original <- db.parametros.i$a ; a.original
-  b.original <- db.parametros.i$b ; b.original
-  H.original <- estaciones$Metadata$altitude ; H.original
   
-  
-  id.valores.NA <- which(is.na(a.original))
-  a <- a.original[-id.valores.NA]
-  b <- b.original[-id.valores.NA]
-  H <- H.original[-id.valores.NA]
-  
-  db0 <- data.frame(a=a, b=b, H=H)
-  
+  id.valores.NA <- which(is.na(db.parametros.con.altitud.i$a))
+  db.parametros.con.altitud.sin.NA.i <- db.parametros.con.altitud.i[-id.valores.NA,]
   
   # Ajustando modelo de poder
   
@@ -270,7 +275,7 @@ for (i in bloques) {
                                        return(y) }
   
   modelo.a <- nls(a ~ funcion_de_poder(c, d, H),
-                  data = db0,
+                  data = db.parametros.con.altitud.sin.NA.i,
                   start = c(c=0.1, d=0.1))
   
   c.a <- coefficients(modelo.a)[1]
@@ -278,21 +283,33 @@ for (i in bloques) {
   
   
   modelo.b <- nls(b ~ funcion_de_poder(c, d, H),
-                  data = db0,
+                  data = db.parametros.con.altitud.sin.NA.i,
                   start = c(c=0.1, d=0.1))
   
   c.b <- coefficients(modelo.b)[1]
   d.b <- coefficients(modelo.b)[2]
   
-  db0$a.estimado <- funcion_de_poder(c.a, d.a, db0$H)
-  db0$b.estimado <- funcion_de_poder(c.b, d.b, db0$H)
-  db0$bloque <- i
-
-  db <- rbind(db, db0)
-}
   
+  db.parametros.con.altitud.sin.NA.i$c_de_a <- c.a
+  db.parametros.con.altitud.sin.NA.i$d_de_a <- d.a
+  db.parametros.con.altitud.sin.NA.i$c_de_b <- c.b
+  db.parametros.con.altitud.sin.NA.i$d_de_b <- d.b
+  
+  db.parametros.con.altitud.sin.NA.i$a.estimado <- funcion_de_poder(c.a, d.a, 
+                                                                    db.parametros.con.altitud.sin.NA.i$H)
+  db.parametros.con.altitud.sin.NA.i$b.estimado <- funcion_de_poder(c.b, d.b, 
+                                                                    db.parametros.con.altitud.sin.NA.i$H)
+  db.parametros.con.altitud.sin.NA.i$bloque <- i
+
+  db <- rbind(db, db.parametros.con.altitud.sin.NA.i)
+}
+
+row.names(db) <- 1:nrow(db)
 head(db)
 db$bloque <- factor(db$bloque, levels = 1:73)
+
+
+# Plots
 
 xyplot(a~H | bloque, data=db, type=c('p', 'g', 'smooth'),
        main="Parametro 'a' vs altitud de cada bloque") # Show points ("p"), grids ("g") and smoothing line
@@ -310,19 +327,8 @@ xyplot(b~H | bloque, data=db, type=c('p', 'g', 'smooth'),
 db$residual.de.a <- db$a-db$a.estimado
 db$residual.de.b <- db$b-db$b.estimado
 
-# significancia
-
-summary(modelo.a)
-summary(modelo.b)
-
 
 # plots de residuales
-
-plot(db$residual.de.a)
-abline(h=0, col='red')
-
-plot(db$residual.de.b)
-abline(h=0, col='red')
 
 histogram(~residual.de.a | bloque, data=db,
        main="Residuales parametro 'a' de cada bloque")
@@ -337,16 +343,55 @@ histogram(~residual.de.b | bloque, data=db,
 
 # Preparando db para correcion ----
 
-nombre.estaciones <- estaciones$Metadata$name
-altitud.estaciones <- estaciones$Metadata$altitude
-db.altitud <- data.frame(nombre_estacion=nombre.estaciones, altitud=altitud.estaciones)
+head(db)
+head(db.estaciones)
 
 db.estaciones$id <- paste(db.estaciones$fecha, db.estaciones$nombre_estacion, sep='_')
+colnames(db.estaciones)[2] <- 'valor.estaciones'
+
+head(db.era5)
+db.era5$id <- paste(db.era5$fecha, db.era5$nombre_estacion, sep='_')
+db.era5 <- db.era5[,-c(1,3)]
+colnames(db.era5)[1] <- 'valor.era5'
+head(db.estaciones)
+head(db.era5)
 
 db.estaciones.y.era5.preliminar <- merge(db.estaciones, db.era5, by='id')
-db.estaciones.y.era5 <- merge(db.estaciones.y.era5.preliminar, db.altitud, by='nombre_estacion')
+head(db.estaciones.y.era5.preliminar)
+head(db.estacion.altitud)
 
-head(db.estaciones.y.era5)
+db.estaciones.y.era5_1 <- merge(db.estaciones.y.era5.preliminar, db.estacion.altitud, by='nombre_estacion')
+db.estaciones.y.era5_1$mes_y_dia <- paste(month(db.estaciones.y.era5_1$fecha), day(db.estaciones.y.era5_1$fecha),
+                                        sep = '-')
+head(db.estaciones.y.era5_1) 
+
+db.fechas.por.bloque.sin.buffer0 <- db.fechas.por.bloque[,c('mes_y_dia', 'bloque_sin_buffer')]
+id.diferente.de.NA <- which(!is.na(db.fechas.por.bloque.sin.buffer0$bloque_sin_buffer))
+db.fechas.por.bloque.sin.buffer <- db.fechas.por.bloque.sin.buffer0[id.diferente.de.NA,]
+head(db.fechas.por.bloque.sin.buffer)
+
+db.estaciones.y.era5_2 <- merge(db.estaciones.y.era5_1, db.fechas.por.bloque.sin.buffer, by = 'mes_y_dia', all.x=TRUE)
+row.names(db.estaciones.y.era5_2) <- 1:nrow(db.estaciones.y.era5_2)
+
+head(db)
+head(db.estaciones.y.era5_2)
+
+dim(db)
+dim(db.estaciones.y.era5_2)
+
+db$id <- paste(db$nombre_estacion, db$bloque, sep = '_')
+db.para.merge <- db[,c('id', 'a', 'b', 'c_de_a', 'd_de_a', 'c_de_b', 'd_de_b')]
+
+db.estaciones.y.era5_2$id <- paste(db.estaciones.y.era5_2$nombre_estacion, 
+                                   db.estaciones.y.era5_2$bloque_sin_buffer, sep = '_')
+
+db.estaciones.y.era5_3 <- merge(db.estaciones.y.era5_2, db.para.merge, by = 'id', all.x=TRUE)
+head(db.estaciones.y.era5_3)
+
+dim(db.para.merge)
+dim(db.estaciones.y.era5_1)
+dim(db.estaciones.y.era5_2)
+dim(db.estaciones.y.era5_3)
 
 # fin ---
 
@@ -355,42 +400,98 @@ head(db.estaciones.y.era5)
 
 # Correccion a nivel de estacion ----
 
-db.estaciones.y.era5$a <- funcion_de_poder(c.a, d.a, db.estaciones.y.era5$altitud)
-db.estaciones.y.era5$b <- funcion_de_poder(c.b, d.b, db.estaciones.y.era5$altitud)
+db.estaciones.y.era5_3$valor.era5.corregido <- db.estaciones.y.era5_3$a*(db.estaciones.y.era5_3$valor.era5^db.estaciones.y.era5_3$b)
 
-head(db.estaciones.y.era5)
-dim(db.estaciones.y.era5)
-
-db.estaciones.y.era5$valor.simulado.corregido <- db.estaciones.y.era5$a*(db.estaciones.y.era5$valor.simulado^db.estaciones.y.era5$b)
-
-head(db.estaciones.y.era5)
-dim(db.estaciones.y.era5)
+head(db.estaciones.y.era5_3)
+dim(db.estaciones.y.era5_3)
 
 # setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
 # write.csv(db.estaciones.y.era5, 'ejemplo_bias_correcion_por_estacion_con_modelos_enero.csv', row.names = FALSE)
 
-# plot
+
+# Plot
 
 nombre.estaciones
-db.subset <- subset(db.estaciones.y.era5, nombre_estacion==nombre.estaciones[1])
-rango.de.valores <- 500:550
+db.subset <- subset(db.estaciones.y.era5_3, nombre_estacion==nombre.estaciones[1])
+rango.de.valores <- 750:800
 
 # par(mfrow=c(2,1))
-valor.maximo <- max(db.subset$valor.simulado.corregido[rango.de.valores])
+valor.maximo <- max(db.subset$valor.era5.corregido[rango.de.valores], na.rm = TRUE)
 
-plot(db.subset$valor[rango.de.valores], type='l', lwd=2, ylim=c(0, valor.maximo))
-lines(db.subset$valor.simulado[rango.de.valores], col='red', lwd=2)
-lines(db.subset$valor.ptr[rango.de.valores], col='green', lwd=2)
-lines(db.subset$valor.simulado.corregido[rango.de.valores], col='blue', lwd=2)
+plot(db.subset$valor.estaciones[rango.de.valores], type='l', lwd=2, ylim=c(0, valor.maximo))
+lines(db.subset$valor.era5[rango.de.valores], col='red', lwd=2)
+lines(db.subset$valor.era5.corregido[rango.de.valores], col='blue', lwd=2)
 
-legend('topright', legend = c('Observado', 'ERA5', 'PTR', 'Modelo de poder'), 
-       lwd=c(2,2,2,2), 
-       col = c('black', 'red', 'green', 'blue'))
+legend('topright', legend = c('Observado', 'ERA5', 'Modelo de poder'), 
+       lwd=c(2,2,2), 
+       col = c('black', 'red', 'blue'))
 
-# plot(db.estaciones.y.era5$valor[rango.de.valores], type='l', lwd=2)
-# lines(db.estaciones.y.era5$valor.simulado[rango.de.valores], col='red', lwd=2)
-# lines(db.estaciones.y.era5$valor.ptr[rango.de.valores], col='green', lwd=2)
-# lines(db.estaciones.y.era5$valor.simulado.ln.corregido[rango.de.valores], col='blue', lwd=2)
+# fin ---
+
+
+
+
+# Preparacion de grillas ----
+
+pr.sum.corregido0 <- pr.sum.total.original
+
+fechas.inicio <- as.Date(pr.sum.corregido0$Dates$start)
+fechas.termino <- as.Date(pr.sum.corregido0$Dates$end)
+numero.de.matrices <- dim(pr.sum.corregido0$Data)[1]
+pr.sum.corregido0$Data[1,,]
+
+
+# Descartando matrices con fecha 29 de febrero
+
+db.matriz.por.fecha <- data.frame(fecha_inicio=fechas.inicio, fecha_termino=fechas.termino, 
+                                  id=1:numero.de.matrices)
+
+db.matriz.por.fecha$mes_y_dia_inicio <- paste(month(db.matriz.por.fecha$fecha_inicio), 
+                                              day(db.matriz.por.fecha$fecha_inicio), sep = '-')
+head(db.matriz.por.fecha)
+dim(db.matriz.por.fecha)
+
+id.a.eliminar <- which(db.matriz.por.fecha$mes_y_dia_inicio=='2-29')
+
+pr.sum.corregido0$Dates$start <- pr.sum.corregido0$Dates$start[-id.a.eliminar]
+pr.sum.corregido0$Dates$end <- pr.sum.corregido0$Dates$end[-id.a.eliminar]
+pr.sum.corregido0$Data <- pr.sum.corregido0$Data[-id.a.eliminar,,]  
+
+
+attr(pr.sum.corregido0$Data, "dimensions") <- c('time', 'lat', 'lon')
+
+dim(pr.sum.corregido0$Data)
+length(pr.sum.corregido0$Dates$start)
+length(pr.sum.corregido0$Dates$end)
+
+pr.sum.corregido <- pr.sum.corregido0
+
+
+# Generando matriz de elevacion
+
+raster.pr.sum.corregido0 <- grid2sp(pr.sum.corregido)
+raster.pr.sum.corregido <- stack(raster.pr.sum.corregido0)
+plot(raster.pr.sum.corregido, 1)
+
+
+setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
+dem <- raster('dem3_clip_para_mapas.tif')
+
+dem.clip <- crop(dem, raster.pr.sum.corregido)
+plot(dem.clip, colNA='red')
+
+dem.clip.resemple <- resample(dem.clip, raster.pr.sum.corregido, method='ngb')
+plot(dem.clip.resemple)
+
+matriz.altitud <- as.matrix(dem.clip.resemple)
+
+
+# Generando db con elevacion de estaciones
+
+db.estaciones <- estaciones$xyCoords
+db.estaciones$nombre_estacion <- estaciones$Metadata$name
+db.estaciones$H.resample <- extract(dem.clip.resemple, db.estaciones[,c('x', 'y')], sp=TRUE)
+db.estaciones
 
 # fin ---
 
@@ -399,41 +500,49 @@ legend('topright', legend = c('Observado', 'ERA5', 'PTR', 'Modelo de poder'),
 
 # Correcion a nivel de grilla ----
 
-pr.sum.corregido0 <- pr.sum.total.original
-pr.sum.corregido <- pr.sum.total.original
+numero.de.matrices.2 <- dim(pr.sum.corregido$Data)[1]
 
-numero.de.matrices <- dim(pr.sum.corregido0$Data)[1]
-pr.sum.corregido0$Data[1,,]
-
-# pr.sum.corregido0$Data[1,,] <- pr.sum.corregido0$Data[1,,]
-
-raster.pr.sum.corregido0 <- grid2sp(pr.sum.corregido0)
-raster.pr.sum.corregido0 <- stack(raster.pr.sum.corregido0)
-plot(raster.pr.sum.corregido0, 1)
-
-setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
-dem <- raster('dem3_clip_para_mapas.tif')
-# plot(dem)
-
-dem.clip <- crop(dem, raster.pr.sum.corregido0)
-plot(dem.clip)
-
-dem.clip.resemple <- resample(dem.clip, raster.pr.sum.corregido0, method='bilinear')
-plot(dem.clip.resemple)
-
-matriz.altitud <- as.matrix(dem.clip.resemple)
-
-####
-
-
-for (i in 1:numero.de.matrices) {
+for (i in 1:numero.de.matrices.2) {
+#  i <- 1
   
-  matriz.i <- pr.sum.corregido0$Data[i,,]
+  mensaje.inicio <- paste('Matriz', i, 'lista de', numero.de.matrices.2)
+  message(mensaje.inicio)
+  
+  # Seleccion de matriz con fecha 'i'
+  
+  matriz.i <- pr.sum.corregido$Data[i,,]
+  fecha.i <- as.Date(pr.sum.corregido$Dates$start[i])
+  mes_y_dia_i <- paste(month(fecha.i), day(fecha.i), sep = '-')
+  
+  
+  # Seleccion de parametros 'c' y 'd' segun bloque 'i'
+  
+  bloque.i <- db.fechas.por.bloque.sin.buffer$bloque_sin_buffer[db.fechas.por.bloque.sin.buffer$mes_y_dia==mes_y_dia_i]
+  
+  c.a.preliminar <- db.estaciones.y.era5_3$c_de_a[db.estaciones.y.era5_3$bloque_sin_buffer%in%bloque.i]
+  c.a.preliminar2 <- unique(c.a.preliminar)
+  c.a <- c.a.preliminar2[!is.na(c.a.preliminar2)]
+  
+  d.a.preliminar <- db.estaciones.y.era5_3$d_de_a[db.estaciones.y.era5_3$mes_y_dia==mes_y_dia_i]
+  d.a.preliminar2 <- unique(d.a.preliminar)
+  d.a <- d.a.preliminar2[!is.na(d.a.preliminar2)]
+  
+  c.b.preliminar <- db.estaciones.y.era5_3$c_de_b[db.estaciones.y.era5_3$mes_y_dia==mes_y_dia_i]
+  c.b.preliminar2 <- unique(c.b.preliminar)
+  c.b <- c.b.preliminar2[!is.na(c.b.preliminar2)]
+  
+  d.b.preliminar <- db.estaciones.y.era5_3$d_de_b[db.estaciones.y.era5_3$mes_y_dia==mes_y_dia_i]
+  d.b.preliminar2 <- unique(d.b.preliminar)
+  d.b <- d.b.preliminar2[!is.na(d.b.preliminar2)]
+  
+  
+  # Correccion de cada pixel de precipitacion 'j,k' segun altitud correspondiente
   
   for (j in 1:nrow(matriz.i)) {
-      
-    for (k in 1:ncol(matriz.i)){
-      
+  #  j <- 1
+    
+   for (k in 1:ncol(matriz.i)){
+   #  k <- 1    
       precipitacion.i <- matriz.i[j,k]
       altitud.i <- matriz.altitud[j,k]
       
@@ -447,40 +556,116 @@ for (i in 1:numero.de.matrices) {
       
   }
   
-  pr.sum.corregido0$Data[i,,] <- matriz.i
+  
+  # reemplazando matriz de precipitacion 'i' por matriz corregida
+  
+  pr.sum.corregido$Data[i,,] <- matriz.i
   
 }
 
-pr.sum.corregido$Data <- pr.sum.corregido0$Data
-pr.sum.corregido
+# fin ---
+
+
+
+
+# Guardando grilla corregida ----
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+
+# Name of output file:
+fileName <- "pr_era5_corregido_2.nc4"
+
+# Including a global attribute:
+globalAttributeList <- list("institution" = "Centro Butamallin - Investigación en Cambio Climático")
+
+# Including variable attributes:
+varAttributeList <- list(var_attr1 = "Precipitación (mm)")
+
+# Create file:
+grid2nc(data = pr.sum.corregido,
+        NetCDFOutFile = fileName,
+        missval = 1e20,
+        prec = "float",
+        globalAttributes = globalAttributeList,
+        varAttributes = varAttributeList)
+
+# library(ncdf4)
+# ej <- nc_open('pr_era5_corregido_2.nc4')
+# ej
+
+# fin ---
+
+
+
+
+# Generando db con valores crudos y corregidos ----
 
 era5.corregido <- grid2sp(pr.sum.corregido)
 db.era5.corregido <- grilla_a_db(era5.corregido, estaciones)
-
+db.era5.corregido$id <- paste(db.era5.corregido$fecha, db.era5.corregido$nombre_estacion, 
+                              sep = '_')
+colnames(db.era5.corregido)[2] <- 'valor.corregido.en.grilla'
 head(db.era5.corregido)
-head(db.estaciones.y.era5)
 
-#######
+head(db.estaciones.y.era5_3)
+db.estaciones.y.era5_4 <- db.estaciones.y.era5_3[,c('nombre_estacion', 'fecha', 
+                                                    'valor.estaciones', 'valor.era5',
+                                                    'valor.era5.corregido', 'H')]
+
+db.estaciones.y.era5_4$id <- paste(db.estaciones.y.era5_4$fecha, 
+                                   db.estaciones.y.era5_4$nombre_estacion, sep = '_')
+head(db.estaciones.y.era5_4)
+
+db.estaciones.y.era5_5 <- db.estaciones.y.era5_4[,c('id', 'valor.estaciones',
+                                                    'valor.era5', 'valor.era5.corregido',
+                                                    'H')]
+head(db.estaciones.y.era5_5)
+
+db.con.valores.corregidos.preliminar <- merge(db.era5.corregido, db.estaciones.y.era5_5, by='id')
+db.con.valores.corregidos.preliminar.2 <- db.con.valores.corregidos.preliminar[,c(
+                                                           'fecha', 'nombre_estacion', 'H',
+                                                           'valor.estaciones', 'valor.era5',
+                                                           'valor.era5.corregido',
+                                                           'valor.corregido.en.grilla')]
+
+db.con.valores.corregidos <- merge(db.con.valores.corregidos.preliminar.2, db.estaciones,
+                                   by='nombre_estacion')
+
+db.con.valores.corregidos <- db.con.valores.corregidos[,c('fecha', 'nombre_estacion', 'x', 'y',
+                                                          'H', 'H.resample', 'valor.estaciones', 
+                                                          'valor.era5', 'valor.era5.corregido',
+                                                          'valor.corregido.en.grilla')]
+head(db.con.valores.corregidos)
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+# write.csv(db.con.valores.corregidos, 'bias_correcion_por_estacion.csv', row.names = FALSE)
+
+# fin ---
+
+
+
+
+# Plots grillas no corregidas vs corregidas ----
 
 raster.era5.corregido <- stack(era5.corregido)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/plots/')
 
-png('mapa_altitud_era5Original_era5Corregida.png', width = 780, height = 780, units = "px")
+# png('mapa_altitud_era5Original_era5Corregida.png', width = 780, height = 780, units = "px")
 par(mfrow=c(3,3))
 
 plot(dem.clip.resemple, main='Altitud')
-plot(raster.pr.sum.corregido0, 1, main='01/01/1995 ERA5')
+plot(raster.pr.sum.corregido, 1, main='01/01/1995 ERA5')
 plot(raster.era5.corregido, 1, main='01/01/1995 ERA5-CORREGIDO')
 
 plot(dem.clip.resemple, main='Altitud')
-plot(raster.pr.sum.corregido0, 15, main='15/01/1995 ERA5')
+plot(raster.pr.sum.corregido, 15, main='15/01/1995 ERA5')
 plot(raster.era5.corregido, 15, main='15/01/1995 ERA5-CORREGIDO')
 
 plot(dem.clip.resemple, main='Altitud')
-plot(raster.pr.sum.corregido0, 30, main='30/01/1995 ERA5')
+plot(raster.pr.sum.corregido, 30, main='30/01/1995 ERA5')
 plot(raster.era5.corregido, 30, main='30/01/1995 ERA5-CORREGIDO')
 
-dev.off()
+# dev.off()
 
 # fin ---
