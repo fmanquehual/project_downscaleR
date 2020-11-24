@@ -1,6 +1,8 @@
 library(raster)
 
-anhadiendo_altitud <- function(data_base, sistema_de_coordenadas='wgs84'){
+anhadiendo_altitud <- function(data_base, sistema_de_coordenadas='wgs84', 
+                               directorio_dem='C:/Users/Usuario/Documents/Francisco/coberturas/',
+                               nombre_dem='clip_dem_sudamerica.tif'){
 
   # data_base <- db4
   # sistema_de_coordenadas <- 'wgs84'
@@ -21,11 +23,11 @@ anhadiendo_altitud <- function(data_base, sistema_de_coordenadas='wgs84'){
   # plot(estaciones.shp, pch = 16, col = 'red')
   # text(estaciones.shp, data_base$name, pos = 3, cex=0.5)
   
-  setwd('C:/Users/Usuario/Documents/Francisco/coberturas/')
-  dem.area.de.estudio <- raster('clip_dem_sudamerica.tif')
+  setwd(directorio_dem)
+  dem.area.de.estudio <- raster(nombre_dem)
   data_base$altitude <- as.character(data_base$altitude)
   data_base$altitude <- extract(dem.area.de.estudio, estaciones.shp)
-  
+  data_base$altitude <- round(data_base$altitude, 0)
   setwd(directorio.original)
   
   return(data_base)

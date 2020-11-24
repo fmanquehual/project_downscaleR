@@ -22,6 +22,7 @@ source('funcion_prt.R')
 source('funcion_generador_de_fechas.R')
 source('funcion_bloque_de_dias.R')
 source('funcion_ptr_por_bloque.R')
+source('funcion_calculo_de_resolucion.R')
 
 
 # Funciones ----
@@ -51,6 +52,8 @@ loadGridData_personalizado <- function(archivo.i, variable.i, es.precipitacion=F
 
 # Parametros ----
 
+wgs84 <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" #coordenadas geograficas WGS84
+
 anhos.entrenamiento <- 1995:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
 anhos.total <- 1995:2017
 # latitud <- c(-49,-36) # area de estudio CCR
@@ -73,7 +76,6 @@ db.parametros <- c()
 tz.i <- 'GMT'
 
 # fin ---
-
 
 
 
@@ -122,9 +124,9 @@ for (j in 1) {
   
   estaciones.original <- estaciones
   
-  if(i>1){c(
-    estaciones$Dates$start <- as.vector(unlist(nuevas_fechas(estaciones, entregar_fecha_inicio = TRUE, iteracion = i, tz=tz.i)[2])),
-    estaciones$Dates$end <- as.vector(unlist(nuevas_fechas(estaciones, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
+  # if(i>1){c(
+  #   estaciones$Dates$start <- as.vector(unlist(nuevas_fechas(estaciones, entregar_fecha_inicio = TRUE, iteracion = i, tz=tz.i)[2])),
+  #   estaciones$Dates$end <- as.vector(unlist(nuevas_fechas(estaciones, entregar_fecha_inicio = FALSE, iteracion = i, tz=tz.i)[2])) )}
   
   # temporalPlot(estaciones, aggr.spatial = list(FUN = mean, na.rm = TRUE))
   
@@ -133,12 +135,21 @@ for (j in 1) {
   
   # Predictors (ERA reanalisis) 
   
-  message('Leyendo datos de ERA5')
+  # message('Leyendo datos de ERA5')
   
-  #setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA_LAND/') # Tiene NA por el oceano, lo que genera problemas
+  # setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA_LAND/') # Tiene NA por el oceano, lo que genera problemas
   setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/descargas_ERA5/copernicus/')
+  # setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/downscaled_WRF/')
+  # era5 <- 'RAINRATE_ERAint_Domain2_5a1_Conf10_2018_para_ejemplos.nc'
   era5 <- 'ERA5_1979_2018_pp.nc'
   
+  # library(ncdf4)
+  # ej <- nc_open(era5, write = TRUE)
+  # 
+  # ej <- ncvar_rename(ej, old_varname = 'tp', new_varname = 'pr')
+  # ej <- ncvar_rename(ej, old_varname = 'XLONG', new_varname = 'lon'v)
+  # ej <- ncvar_rename(ej, old_varname = 'XLAT', new_varname = 'lat')
+  # nc_close(ej)
   
   # Precipitacion
   # C4R.vocabulary()
@@ -146,16 +157,17 @@ for (j in 1) {
   message('Transformando unidades de variable')
   
   # Datos de entrenamiento
-  
-  pr.sum0.entrenamiento <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, es.cmip6 = FALSE, anhos = anhos.entrenamiento)
+  # dataInventory(era5)
+  pr.sum0.entrenamiento <- loadGridData_personalizado(era5, "tp", es.precipitacion = TRUE, 
+                                                      es.cmip6 = FALSE, anhos = anhos.entrenamiento)
   pr.sum.entrenamiento <- udConvertGrid(pr.sum0.entrenamiento, new.units = "mm")
   
-  if(i>1){c(
-    # pr.sum.entrenamiento.original <- pr.sum.entrenamiento,
-    pr.sum.entrenamiento$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = TRUE, 
-                                                                       datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])),
-    pr.sum.entrenamiento$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = FALSE, 
-                                                                     datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])) )}
+  # if(i>1){c(
+  #   # pr.sum.entrenamiento.original <- pr.sum.entrenamiento,
+  #   pr.sum.entrenamiento$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = TRUE, 
+  #                                                                      datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])),
+  #   pr.sum.entrenamiento$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.entrenamiento, entregar_fecha_inicio = FALSE, 
+  #                                                                    datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])) )}
   
   
   # Datos totales
@@ -164,17 +176,6 @@ for (j in 1) {
   pr.sum.total <- udConvertGrid(pr.sum0.total, new.units = "mm")
   
   pr.sum.total.original <- pr.sum.total
-  
-  if(i>1){c(
-    #pr.sum.total.original <- pr.sum.total,
-    pr.sum.total$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = TRUE, 
-                                                               datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])),
-    pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total, entregar_fecha_inicio = FALSE, 
-                                                             datos_simulados=TRUE, iteracion = i, tz=tz.i)[2])) )}
-  
-  # fin ---
-  
-  
   
   
   # Obteniendo parametros de metodo ptr ----
@@ -228,21 +229,21 @@ for (j in 1) {
   
   message('Extrayendo valores de celda donde estan ubicados las estaciones')
   
-  pr.sum.total$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
-                                                             entregar_fecha_inicio = TRUE, 
-                                                             iteracion = i, tz=tz.i)[1]))
-  
-  pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
-                                                           entregar_fecha_inicio = FALSE, 
-                                                           iteracion = i, tz=tz.i)[1]))
+  # pr.sum.total$Dates$start <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+  #                                                            entregar_fecha_inicio = TRUE, 
+  #                                                            iteracion = i, tz=tz.i)[1]))
+  # 
+  # pr.sum.total$Dates$end <- as.vector(unlist(nuevas_fechas(pr.sum.total.original, 
+  #                                                          entregar_fecha_inicio = FALSE, 
+  #                                                          iteracion = i, tz=tz.i)[1]))
   
   era5.en.ubicacion.de.estacion.i <- grid2sp(pr.sum.total)
   db.era5.preliminar <- grilla_a_db(era5.en.ubicacion.de.estacion.i, estaciones)
   db.era5 <- rbind(db.era5, db.era5.preliminar)
   
-  # fin ---
-  
 }
+
+# fin ---
 
 
 
@@ -258,9 +259,11 @@ head(db.parametros.con.altitud)
 
 bloques <- unique(db.parametros.con.altitud$bloque)
   
+iteraciones <- 75 # default es 50
 db <- c()
+
 for (i in bloques) {
-  # i <- 1
+  # i <- 29
   
   db.parametros.con.altitud.i <- subset(db.parametros.con.altitud, bloque==i)
   
@@ -276,7 +279,8 @@ for (i in bloques) {
   
   modelo.a <- nls(a ~ funcion_de_poder(c, d, H),
                   data = db.parametros.con.altitud.sin.NA.i,
-                  start = c(c=0.1, d=0.1))
+                  start = c(c=0.1, d=0.1),
+                  control = list(maxiter=iteraciones))
   
   c.a <- coefficients(modelo.a)[1]
   d.a <- coefficients(modelo.a)[2]
@@ -284,7 +288,8 @@ for (i in bloques) {
   
   modelo.b <- nls(b ~ funcion_de_poder(c, d, H),
                   data = db.parametros.con.altitud.sin.NA.i,
-                  start = c(c=0.1, d=0.1))
+                  start = c(c=0.1, d=0.1),
+                  control = list(maxiter=iteraciones))
   
   c.b <- coefficients(modelo.b)[1]
   d.b <- coefficients(modelo.b)[2]
@@ -322,7 +327,7 @@ xyplot(b~H | bloque, data=db, type=c('p', 'g', 'smooth'),
 
 
 
-# Evaluando modelos ----
+# Residuales ----
 
 db$residual.de.a <- db$a-db$a.estimado
 db$residual.de.b <- db$b-db$b.estimado
@@ -341,7 +346,7 @@ histogram(~residual.de.b | bloque, data=db,
 
 
 
-# Preparando db para correcion ----
+# Preparando db para correccion ----
 
 head(db)
 head(db.estaciones)
@@ -413,7 +418,7 @@ dim(db.estaciones.y.era5_3)
 
 nombre.estaciones
 db.subset <- subset(db.estaciones.y.era5_3, nombre_estacion==nombre.estaciones[1])
-rango.de.valores <- 750:800
+rango.de.valores <- 850:900
 
 # par(mfrow=c(2,1))
 valor.maximo <- max(db.subset$valor.era5.corregido[rango.de.valores], na.rm = TRUE)
@@ -474,17 +479,23 @@ raster.pr.sum.corregido <- stack(raster.pr.sum.corregido0)
 plot(raster.pr.sum.corregido, 1)
 
 
-setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
-dem <- raster('dem3_clip_para_mapas.tif')
+# setwd('C:/Users/Usuario/Documents/Francisco/WRF/coberturas/coberturas_ok/')
+# dem <- raster('dem3_clip_para_mapas.tif')
+# 
+# dem.clip <- crop(dem, raster.pr.sum.corregido)
+# plot(dem.clip, colNA='red')
+# 
+# dem.clip.resemple <- resample(dem.clip, raster.pr.sum.corregido, method='bilinear')
+# crs(dem.clip.resemple) <- wgs84
+# plot(dem.clip.resemple)
+# 
+# matriz.altitud <- as.matrix(dem.clip.resemple)
+# 
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/capas/')
+# writeRaster(dem.clip.resemple, filename="dem_regrillado_bilinear_era5.tif",
+#             format="GTiff", overwrite=TRUE)
 
-dem.clip <- crop(dem, raster.pr.sum.corregido)
-plot(dem.clip, colNA='red')
-
-dem.clip.resemple <- resample(dem.clip, raster.pr.sum.corregido, method='ngb')
-plot(dem.clip.resemple)
-
-matriz.altitud <- as.matrix(dem.clip.resemple)
-
+dem.clip.resemple <- raster('dem_regrillado_bilinear_era5.tif')
 
 # Generando db con elevacion de estaciones
 
@@ -619,7 +630,7 @@ head(db.estaciones.y.era5_4)
 db.estaciones.y.era5_5 <- db.estaciones.y.era5_4[,c('id', 'valor.estaciones',
                                                     'valor.era5', 'valor.era5.corregido',
                                                     'H')]
-head(db.estaciones.y.era5_5)
+head
 
 db.con.valores.corregidos.preliminar <- merge(db.era5.corregido, db.estaciones.y.era5_5, by='id')
 db.con.valores.corregidos.preliminar.2 <- db.con.valores.corregidos.preliminar[,c(

@@ -136,6 +136,7 @@ del_10_a_n <- paste0('0', 10:nrow(estaciones.db.todos))
 estaciones.db.todos$station_id <- c(del_1_al_9, del_10_a_n)
 
 estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84')
+estaciones.db.todos$altitude[estaciones.db.todos$altitude==0] <- 1
 head(estaciones.db.todos)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
