@@ -1,4 +1,5 @@
 library(lubridate)
+library(Metrics)
 
 rm(list=ls())
 dev.off()
@@ -19,8 +20,6 @@ db$anho <- year(db$fecha)
 str(db)
 head(db)
 sort(unique(db$anho))
-
-boxplot(unique(db$H), unique(db$H.resample))
 
 # fin ---
 
@@ -49,7 +48,7 @@ colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 # Calculando precipitacion anual ----
 
 nombre.estacion <- unique(db$nombre_estacion)
-estacion.de.interes <- nombre.estacion[14] ; estacion.de.interes
+estacion.de.interes <- nombre.estacion[5] ; estacion.de.interes
 
 observado.anual <- db_a_formato_ts(db.observado, estacion = estacion.de.interes)
 era5.raw.anual <- db_a_formato_ts(db.era5.raw, estacion = estacion.de.interes)
@@ -97,7 +96,7 @@ lines(era5.raw.anual, lty=1, lwd=2, col='blue')
 lines(era5.corregido.anual, lty=1, lwd=2, col='red')
 lines(corregido.nivel.grilla.anual, lty=1, lwd=2, col='orange')
 
-legend('topright', legend = c('Observado', 'ERA5 sin corregir', 'ERA5 corregido', 'Corregido a nivel de grilla'), 
+legend('topleft', legend = c('Observado', 'ERA5 sin corregir', 'ERA5 corregido', 'Corregido a nivel de grilla'), 
        lty = c(1,1,1,1), lwd=c(2,2,2,2), 
        col = c('black', 'blue', 'red', 'orange'))
 

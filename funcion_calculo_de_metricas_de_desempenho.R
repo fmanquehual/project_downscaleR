@@ -1,9 +1,7 @@
-library(Metrics)
-
 calculo_de_metricas_de_desempenho <- function(db_observado, db_simulado, estacion=NULL, precision=2){
   
-  # db_observado <- estaciones
-  # db_simulado <- ptr
+  # db_observado <- db.observado
+  # db_simulado <- db.era5.raw
   # estacion <- estacion.de.interes
   
   if(is.null(estacion)){warning('Debes indicar la estacion')}
@@ -43,9 +41,9 @@ calculo_de_metricas_de_desempenho <- function(db_observado, db_simulado, estacio
   length(valores_observados)
   length(valores_simulados)
   
-  rmse <- rmse(actual = valores_observados, predicted = valores_simulados)
-  mae <- mae(actual = valores_observados, predicted = valores_simulados)
-  bias <- bias(actual = valores_observados, predicted = valores_simulados)
+  rmse <- Metrics::rmse(actual = valores_observados, predicted = valores_simulados)
+  mae <- Metrics::mae(actual = valores_observados, predicted = valores_simulados)
+  bias <- Metrics::bias(actual = valores_observados, predicted = valores_simulados)
   pbias <- (sum(valores_observados-valores_simulados)/sum(valores_observados))*100 # Mendez et al. (2020)
   
   # Si p-value es > 0.05, entonces la distribucion es normal. Ocupamos a Pearson.
