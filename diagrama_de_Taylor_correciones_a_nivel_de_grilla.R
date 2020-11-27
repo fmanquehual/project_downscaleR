@@ -28,8 +28,6 @@ str(db)
 head(db)
 sort(unique(db$anho))
 
-boxplot(unique(db$H), unique(db$H.resample))
-
 # fin ---
 
 
@@ -57,7 +55,7 @@ colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 # Preparacion de db's ----
 
 unique(db.observado$nombre_estacion)
-estacion.de.interes <- unique(db.observado$nombre_estacion)[1] ; estacion.de.interes
+estacion.de.interes <- unique(db.observado$nombre_estacion)[3] ; estacion.de.interes
 
 db.observado_depurado <- homogenizacion_entre_db_observado_y_simulado(db.observado, estacion = estacion.de.interes, solo_observado = TRUE)
 db.era5.raw_depurado <- homogenizacion_entre_db_observado_y_simulado(db.observado, db.era5.raw, para_Taylor = TRUE, pbias = FALSE, estacion = estacion.de.interes, normalizado = TRUE)

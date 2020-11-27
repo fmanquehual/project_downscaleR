@@ -33,7 +33,7 @@ tail(db.estaciones)
 
 # Preparacion de db ----
 
-anhos.interes <- 1950:2018
+anhos.interes <- 1995:2018
 
 # tmin
 # carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/'
@@ -110,12 +110,22 @@ head(db.todos)
 tail(db.todos)
 table(db.todos$variable)
 
+# RECUERDA DEPURAR ESTA DB! CON SCRIPT "depuracion_de_datos_precipitacion.R"
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+# write.csv(db.pp, 'estaciones_precipitacion_bruto.csv', row.names = FALSE)
+
+
 # fin ---
 
 
 
 
 # Referencia archivos ASCII ----
+
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+db.todos <- read.csv('estaciones_precipitacion_depurado.csv')
+db.pp <- read.csv('estaciones_precipitacion_depurado.csv')
 
 # estaciones
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/')
@@ -174,7 +184,6 @@ colnames(matriz.pp) <- c('YYYYMMDD', del_1_al_9, del_10_a_n)
 matriz.pp
 
 # save
-
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')
 
 # write.table(matriz.tmin, file='tmin.txt', row.names=FALSE, col.names=TRUE, sep=", ",

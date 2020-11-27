@@ -66,7 +66,7 @@ cuenca <- readOGR('.', 'poligono_cuenca_baker_geo')
 
 wgs84 <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" #coordenadas geograficas WGS84
 
-valores.de.poder.IDW.a.evaluar <- seq(1, 10, by=0.1)
+valores.de.poder.IDW.a.evaluar <- seq(1, 30, by=0.5)
 
 anhos.entrenamiento <- 1995:2010 # con los años 2010:2011, del 1 al 3er mes, corre bien todo
 anhos.total <- 1995:2017
@@ -234,6 +234,7 @@ y <- estaciones$xyCoords$y
 
 db.estaciones.xy <- data.frame(nombre_estacion=nombre.estaciones, lon=x, lat=y)
 db.parametros.xy <- merge(db.parametros, db.estaciones.xy, by='nombre_estacion')
+
 head(db.parametros.xy)
 
 pr.sum.total.stack <- stack(era5.en.ubicacion.de.estacion.i)
@@ -254,7 +255,10 @@ for (i in bloques.unicos) {
   # Quitando NA
   
   id.valores.NA <- which(is.na(db.parametros.xy.i$a))
-  db.parametros.xy.sin.NA.i <- db.parametros.xy.i[-id.valores.NA,]
+  
+  if(length(id.valores.NA)>0){db.parametros.xy.sin.NA.i <- db.parametros.xy.i[-id.valores.NA,]
+    } else(db.parametros.xy.sin.NA.i <- db.parametros.xy.i)
+  
   row.names(db.parametros.xy.sin.NA.i) <- 1:nrow(db.parametros.xy.sin.NA.i)
   
   
@@ -263,7 +267,7 @@ for (i in bloques.unicos) {
   puntos0 <- SpatialPoints(cbind(db.parametros.xy.sin.NA.i$lon, db.parametros.xy.sin.NA.i$lat), 
                            proj4string = CRS(wgs84))
   puntos <- SpatialPointsDataFrame(puntos0, data = db.parametros.xy.sin.NA.i, match.ID = TRUE)
-    
+  
   r.puntos.a <- rasterize(puntos, pr.sum.total.i, field="a", fun=mean, background=NA)
   r.puntos.b <- rasterize(puntos, pr.sum.total.i, field="b", fun=mean, background=NA)
   
@@ -280,13 +284,15 @@ for (i in bloques.unicos) {
   # Calculo de poder optimo para IDW
   poder.a <- seleccion_de_poder_optimo_para_IDW(muestra_valores_poder = valores.de.poder.IDW.a.evaluar, 
                                                 capa_de_puntos = puntos, parametro = 'a', nueva_grilla = grd, 
-                                                raster_de_referencia = raster.referencia, RSR=TRUE, 
-                                                NSE=TRUE, PBIAS=TRUE, RMSE=FALSE, MAE=FALSE)
+                                                raster_de_referencia = raster.referencia, RSR=FALSE, 
+                                                NSE=TRUE, PBIAS=FALSE, RMSE=FALSE, MAE=TRUE) # NSE-MAE
   
   poder.b <- seleccion_de_poder_optimo_para_IDW(muestra_valores_poder = valores.de.poder.IDW.a.evaluar, 
                                                 capa_de_puntos = puntos, parametro = 'b', nueva_grilla = grd, 
-                                                raster_de_referencia = raster.referencia, RSR=TRUE, 
-                                                NSE=TRUE, PBIAS=TRUE, RMSE=FALSE, MAE=FALSE)
+                                                raster_de_referencia = raster.referencia, RSR=FALSE, 
+                                                NSE=TRUE, PBIAS=FALSE, RMSE=FALSE, MAE=TRUE)
+  mensaje <- paste0("Poder de 'a' fue ", poder.a, " y 'b' fue ", poder.b)
+  message(mensaje)
   
   # Interpolate the grid cells using a power value of 2 (idp=2.0)
   puntos.a.idw <- idw(a ~ 1, puntos, newdata=grd, idp=poder.a, debug.level=0) # ~ 1, significa no hay variables independientes
@@ -310,6 +316,12 @@ for (i in bloques.unicos) {
   db.parametros.xy.i$a_estimado <- extract(r.idw.a, db.parametros.xy.i[,c('lon', 'lat')]) 
   db.parametros.xy.i$b_estimado <- extract(r.idw.b, db.parametros.xy.i[,c('lon', 'lat')]) 
   
+  par(mfrow=c(2,1))
+  plot(db.parametros.xy.i$a-db.parametros.xy.i$a_estimado, xlab="Estacion", ylab="Observado-Estimado (a)")
+  abline(h=0, col='red')
+  plot(db.parametros.xy.i$b-db.parametros.xy.i$b_estimado, xlab="Estacion", ylab="Observado-Estimado (b)")
+  abline(h=0, col='red')
+  
   names(r.idw.a) <- paste0('bloque_', i)
   names(r.idw.b) <- paste0('bloque_', i)
   
@@ -327,14 +339,14 @@ for (i in bloques.unicos) {
 
 # Exportando puntos de bloque i ----
 
-puntos0 <- SpatialPoints(cbind(db.parametros.xy.i$lon, db.parametros.xy.i$lat), 
-                         proj4string = CRS(wgs84))
-row.names(db.parametros.xy.i) <- 1:nrow(db.parametros.xy.i)
-puntos <- SpatialPointsDataFrame(puntos0, data = db.parametros.xy.i, match.ID = TRUE)
-
-# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/capas/')
-# writeOGR(puntos, ".", "puntos_bloque_i", driver="ESRI Shapefile",
-#         overwrite_layer = TRUE)
+# puntos0 <- SpatialPoints(cbind(db.parametros.xy.i$lon, db.parametros.xy.i$lat), 
+#                          proj4string = CRS(wgs84))
+# row.names(db.parametros.xy.i) <- 1:nrow(db.parametros.xy.i)
+# puntos <- SpatialPointsDataFrame(puntos0, data = db.parametros.xy.i, match.ID = TRUE)
+# 
+# # setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/capas/')
+# # writeOGR(puntos, ".", "puntos_bloque_i", driver="ESRI Shapefile",
+# #         overwrite_layer = TRUE)
 
 # fin ---
 
@@ -353,6 +365,7 @@ head(db.era5)
 db.era5$id <- paste(db.era5$fecha, db.era5$nombre_estacion, sep='_')
 db.era5 <- db.era5[,-c(1,3)]
 colnames(db.era5)[1] <- 'valor.era5'
+
 head(db.estaciones)
 head(db.era5)
 
@@ -416,6 +429,7 @@ db.subset <- subset(db.estaciones.y.era5_3, nombre_estacion==nombre.estaciones[1
 rango.de.valores <- 850:900
 valor.maximo <- max(db.subset$valor.era5.corregido[rango.de.valores], na.rm = TRUE)
 
+dev.off()
 plot(db.subset$valor.estaciones[rango.de.valores], type='l', lwd=2, ylim=c(0, valor.maximo))
 lines(db.subset$valor.era5[rango.de.valores], col='red', lwd=2)
 lines(db.subset$valor.era5.corregido[rango.de.valores], col='blue', lwd=2)
@@ -522,34 +536,34 @@ for (i in 1:numero.de.matrices.2) {
 
 # Guardando grilla corregida ----
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
-
-# Name of output file:
-fileName <- "pr_era5_corregido.nc4"
-
-# Including a global attribute:
-globalAttributeList <- list("institution" = "Centro Butamallin - Investigación en Cambio Climático")
-
-# Including variable attributes:
-varAttributeList <- list(var_attr1 = "Precipitación (mm)")
-
-# Create file:
-grid2nc(data = pr.sum.corregido,
-        NetCDFOutFile = fileName,
-        missval = 1e20,
-        prec = "float",
-        globalAttributes = globalAttributeList,
-        varAttributes = varAttributeList)
-
-# library(ncdf4)
-# ej <- nc_open('pr_era5_corregido_2.nc4')
-# ej
-
-
-# Create file:
-crs(stack.matrices.a) <- wgs84
-writeRaster(stack.matrices.a[[nlayers(stack.matrices.a)]], filename='pr_era5_parametro_a.tiff', 
-            format="GTiff", overwrite=TRUE)
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+# 
+# # Name of output file:
+# fileName <- "pr_era5_corregido.nc4"
+# 
+# # Including a global attribute:
+# globalAttributeList <- list("institution" = "Centro Butamallin - Investigación en Cambio Climático")
+# 
+# # Including variable attributes:
+# varAttributeList <- list(var_attr1 = "Precipitación (mm)")
+# 
+# # Create file:
+# grid2nc(data = pr.sum.corregido,
+#         NetCDFOutFile = fileName,
+#         missval = 1e20,
+#         prec = "float",
+#         globalAttributes = globalAttributeList,
+#         varAttributes = varAttributeList)
+# 
+# # library(ncdf4)
+# # ej <- nc_open('pr_era5_corregido_2.nc4')
+# # ej
+# 
+# 
+# # Create file:
+# crs(stack.matrices.a) <- wgs84
+# writeRaster(stack.matrices.a[[nlayers(stack.matrices.a)]], filename='pr_era5_parametro_a.tiff', 
+#             format="GTiff", overwrite=TRUE)
 
 # fin ---
 

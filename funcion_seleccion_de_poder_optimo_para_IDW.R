@@ -1,6 +1,6 @@
 seleccion_de_poder_optimo_para_IDW <- function(muestra_valores_poder, capa_de_puntos,
                                                parametro, nueva_grilla, raster_de_referencia,
-                                               RSR=FALSE, NSE=FALSE, PBIAS=FALSE, RMSE=TRUE, 
+                                               RSR=FALSE, NSE=TRUE, PBIAS=FALSE, RMSE=FALSE, 
                                                MAE=TRUE){
   
   # muestra_valores_poder <- valores.de.poder.IDW.a.evaluar
@@ -79,7 +79,8 @@ seleccion_de_poder_optimo_para_IDW <- function(muestra_valores_poder, capa_de_pu
   if(length(estadistico)==1){db.metricas$puntaje_total <- rowSums(cbind(db.metricas[,estadistico]))
     } else(db.metricas$puntaje_total <- rowSums(db.metricas[,estadistico]))
   
-  db.metricas <- db.metricas[order(db.metricas$puntaje_total, decreasing = FALSE),]
+  db.metricas <- db.metricas[order(db.metricas$puntaje_total, db.metricas$poder, 
+                                   decreasing = FALSE),]
   
   poder.optimo <- db.metricas$poder[1]
   

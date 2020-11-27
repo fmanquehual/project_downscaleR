@@ -46,9 +46,10 @@ colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 
 
 # Calculando precipitacion anual ----
-
+for (i in 1:15) {
+  
 nombre.estacion <- unique(db$nombre_estacion)
-estacion.de.interes <- nombre.estacion[5] ; estacion.de.interes
+estacion.de.interes <- nombre.estacion[i] ; estacion.de.interes
 
 observado.anual <- db_a_formato_ts(db.observado, estacion = estacion.de.interes)
 era5.raw.anual <- db_a_formato_ts(db.era5.raw, estacion = estacion.de.interes)
@@ -95,6 +96,8 @@ axis(1, at = 1:12, labels = 1:12)
 lines(era5.raw.anual, lty=1, lwd=2, col='blue')
 lines(era5.corregido.anual, lty=1, lwd=2, col='red')
 lines(corregido.nivel.grilla.anual, lty=1, lwd=2, col='orange')
+
+}
 
 legend('topleft', legend = c('Observado', 'ERA5 sin corregir', 'ERA5 corregido', 'Corregido a nivel de grilla'), 
        lty = c(1,1,1,1), lwd=c(2,2,2,2), 
