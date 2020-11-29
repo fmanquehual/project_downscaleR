@@ -11,6 +11,8 @@ source('funcion_calculo_de_metricas_de_desempenho.R')
 
 # Lectura de datos ----
 
+metodo <- 'IDW' # 'IDW' # 'H'
+
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
 
 db <- read.csv('bias_correcion_por_estacion.csv')
@@ -46,6 +48,9 @@ colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 
 
 # Calculando precipitacion anual ----
+# ERA 5 corregido a nivel de estacion, no mostrara informacion en algunos meses para
+# ciertas estaciones debido a la ausencia o falta de datos para un bloque en particular.
+# Esto hace que no se pueda calcular los parametros a y b, por ende, no se realiza la correcion.
 for (i in 1:15) {
   
 nombre.estacion <- unique(db$nombre_estacion)
@@ -80,14 +85,14 @@ metricas.corregido.nivel.grilla
 
 valor.maximo <- round(max(observado.anual, era5.raw.anual, era5.corregido.anual, 
                           corregido.nivel.grilla.anual, na.rm=TRUE), 0)+1
-valor.maximo
+nombre.plot <- paste0(estacion.de.interes, '_', metodo, '.png')
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/plots/')
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/plots/series_de_tiempo/')
 
-# png('todos_los_metodos_con_datos_de_entrenamiento.png', width = 720, height = 480, units = "px")
+png(nombre.plot, width = 720, height = 480, units = "px")
 
 plot(observado.anual, ylim=c(0, valor.maximo), col = c('black'), lty=1, lwd=2, 
-     main= 'Observado vs distintas correciones de ERA5 (2011-2017)',
+     main= estacion.de.interes, sub=paste('Metodo', metodo), 
      ylab=expression('mm mensual total'^-1), xlab='Mes', xaxt = 'n')
 
 axis(1, at = 1:12, labels = 1:12)
@@ -97,12 +102,12 @@ lines(era5.raw.anual, lty=1, lwd=2, col='blue')
 lines(era5.corregido.anual, lty=1, lwd=2, col='red')
 lines(corregido.nivel.grilla.anual, lty=1, lwd=2, col='orange')
 
+legend('topleft', legend = c('Observado', 'ERA5 sin corregir', 'ERA5 corregido', 'Corregido a nivel de grilla'), 
+       lty = c(1,1,1,1), lwd=c(2,2,2,2), col = c('black', 'blue', 'red', 'orange'), bty='n', cex=0.8)
+
+dev.off()
+
 }
 
-legend('topleft', legend = c('Observado', 'ERA5 sin corregir', 'ERA5 corregido', 'Corregido a nivel de grilla'), 
-       lty = c(1,1,1,1), lwd=c(2,2,2,2), 
-       col = c('black', 'blue', 'red', 'orange'))
-
-# dev.off()
 
 # fin ---

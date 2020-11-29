@@ -50,7 +50,7 @@ for (i in 1:length(estaciones)) {
   anhos.unicos <- unique(db.i$anho)
   match.i <- which(anhos.unicos%in%periodo.entrenamiento)
   
-  if(length(match.i) == 0){estacion_a_eliminar <- c(estacion_a_eliminar, estacion.i)}
+  if(length(match.i) < 5){estacion_a_eliminar <- c(estacion_a_eliminar, estacion.i)}
   
 }
 
@@ -175,7 +175,8 @@ for (i in 1:length(estaciones2)) {
 estaciones_que_no_cumplen_umbral
 
 filas.a.eliminar <- which(db2$archivo.con.coordenadas%in%estaciones_que_no_cumplen_umbral)
-db3 <- db2[-filas.a.eliminar,]
+
+if(length(filas.a.eliminar) == 0){db3 <- db2} else(db3 <- db2[-filas.a.eliminar,])
 row.names(db3) <- 1:nrow(db3)
 
 dim(db2)
@@ -200,8 +201,10 @@ plot_series_temporales(db3, estaciones3)
 
 estaciones3
 
-id.filas.a.eliminar <- which(db3$archivo.con.coordenadas==estaciones2[5])
-db4 <- db3[-id.filas.a.eliminar,]
+id.filas.a.eliminar1 <- which(db3$archivo.con.coordenadas==estaciones2[5])
+id.filas.a.eliminar2 <- which(db3$archivo.con.coordenadas==estaciones2[7])
+
+db4 <- db3[-c(id.filas.a.eliminar1, id.filas.a.eliminar2),]
 head(db4)
 
 db.depurado <- db4[,-ncol(db4)]

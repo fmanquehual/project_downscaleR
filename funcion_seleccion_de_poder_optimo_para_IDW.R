@@ -43,23 +43,23 @@ seleccion_de_poder_optimo_para_IDW <- function(muestra_valores_poder, capa_de_pu
   }
   
   db.rsr <- data.frame(poder=muestra_valores_poder, rsr=rsr.calculados)
-  db.rsr <- db.rsr[order(db.rsr$rsr, decreasing = FALSE),]
+  db.rsr <- db.rsr[order(db.rsr$rsr, db.rsr$poder, decreasing = FALSE),]
   db.rsr$puntaje_rsr <- 1:nrow(db.rsr)
   
   db.nse <- data.frame(poder=muestra_valores_poder, nse=nse.calculados)
-  db.nse <- db.nse[order(db.nse$nse, decreasing = TRUE),]
+  db.nse <- db.nse[order(db.nse$nse, db.nse$poder, decreasing = TRUE),]
   db.nse$puntaje_nse <- 1:nrow(db.nse)
   
   db.pbias <- data.frame(poder=muestra_valores_poder, pbias=pbias.calculados)
-  db.pbias <- db.pbias[order(db.pbias$pbias, decreasing = FALSE),]
+  db.pbias <- db.pbias[order(db.pbias$pbias, db.pbias$poder, decreasing = FALSE),]
   db.pbias$puntaje_pbias <- 1:nrow(db.pbias)
   
   db.rmse <- data.frame(poder=muestra_valores_poder, rmse=rmse.calculados)
-  db.rmse <- db.rmse[order(db.rmse$rmse, decreasing = FALSE),]
+  db.rmse <- db.rmse[order(db.rmse$rmse, db.rmse$poder, decreasing = FALSE),]
   db.rmse$puntaje_rmse <- 1:nrow(db.rmse)
   
   db.mae <- data.frame(poder=muestra_valores_poder, mae=mae.calculados)
-  db.mae <- db.mae[order(db.mae$mae, decreasing = FALSE),]
+  db.mae <- db.mae[order(db.mae$mae, db.mae$poder, decreasing = FALSE),]
   db.mae$puntaje_mae <- 1:nrow(db.mae)
   
   db.metricas1 <- merge(db.rsr, db.nse, by='poder')

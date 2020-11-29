@@ -49,7 +49,7 @@ fecha.raster.i0 <- as.yearmon(fecha.raster.i00)
 fecha.raster.i <- as.Date(fecha.raster.i0)
 fecha.raster.dias.julianos <- as.vector(julian(fecha.raster.i))
 
-dim.variable <- ncdim_def(nombre.variable.en.nc, units='K', vals=as.double(valores.variable))
+# dim.variable <- ncdim_def(nombre.variable.en.nc, units='K', vals=as.double(valores.variable))
 dim.time <- ncdim_def('t', units='mes', longname = 'dia_juliano', calendar="julian", 
                       vals=fecha.raster.dias.julianos, unlim = TRUE)
 

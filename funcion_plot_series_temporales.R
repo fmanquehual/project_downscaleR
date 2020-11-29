@@ -19,7 +19,7 @@ plot_series_temporales <- function(base_de_datos, nombre_estaciones){
     # Mensual
     final.de.mes <- endpoints(db.xts.i, on='months')
     db.mensual.xts.i <- period.apply(db.xts.i, INDEX = final.de.mes, 
-                                     FUN = function(x) sum(x, na.rm = TRUE)) # pp mensual
+                                     FUN = function(x) mean(x, na.rm = TRUE)) # pp mensual
     
     # Anual
     final.anual <- endpoints(db.mensual.xts.i, on='years')

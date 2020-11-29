@@ -220,6 +220,11 @@ for (j in 1) {
   
 }
 
+setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+write.csv(db.parametros, 'parametros_de_correcion_1995_2010.csv', row.names = FALSE)
+write.csv(db.estaciones, 'valores_observados_1995_2017.csv', row.names = FALSE)
+write.csv(db.era5, 'valores_era5_1995_2017.csv', row.names = FALSE)
+
 # fin ---
 
 
@@ -316,11 +321,11 @@ for (i in bloques.unicos) {
   db.parametros.xy.i$a_estimado <- extract(r.idw.a, db.parametros.xy.i[,c('lon', 'lat')]) 
   db.parametros.xy.i$b_estimado <- extract(r.idw.b, db.parametros.xy.i[,c('lon', 'lat')]) 
   
-  par(mfrow=c(2,1))
-  plot(db.parametros.xy.i$a-db.parametros.xy.i$a_estimado, xlab="Estacion", ylab="Observado-Estimado (a)")
-  abline(h=0, col='red')
-  plot(db.parametros.xy.i$b-db.parametros.xy.i$b_estimado, xlab="Estacion", ylab="Observado-Estimado (b)")
-  abline(h=0, col='red')
+  # par(mfrow=c(2,1))
+  # plot(db.parametros.xy.i$a-db.parametros.xy.i$a_estimado, xlab="Estacion", ylab="Observado-Estimado (a)")
+  # abline(h=0, col='red')
+  # plot(db.parametros.xy.i$b-db.parametros.xy.i$b_estimado, xlab="Estacion", ylab="Observado-Estimado (b)")
+  # abline(h=0, col='red')
   
   names(r.idw.a) <- paste0('bloque_', i)
   names(r.idw.b) <- paste0('bloque_', i)
@@ -416,7 +421,7 @@ dim(db.estaciones.y.era5_3)
 
 # Correccion a nivel de estacion ----
 
-db.estaciones.y.era5_3$valor.era5.corregido <- db.estaciones.y.era5_3$a_estimado*(db.estaciones.y.era5_3$valor.era5^db.estaciones.y.era5_3$b_estimado)
+db.estaciones.y.era5_3$valor.era5.corregido <- db.estaciones.y.era5_3$a*(db.estaciones.y.era5_3$valor.era5^db.estaciones.y.era5_3$b)
 
 head(db.estaciones.y.era5_3)
 dim(db.estaciones.y.era5_3)
@@ -603,7 +608,7 @@ dim(db.con.valores.corregidos)
 dim(db.estaciones.y.era5_4)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
-# write.csv(db.con.valores.corregidos, 'bias_correcion_por_estacion.csv', row.names = FALSE)
+write.csv(db.con.valores.corregidos, 'bias_correcion_por_estacion.csv', row.names = FALSE)
 
 # fin ---
 
