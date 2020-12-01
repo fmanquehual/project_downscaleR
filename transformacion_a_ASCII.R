@@ -33,7 +33,7 @@ tail(db.estaciones)
 
 # Preparacion de db ----
 
-anhos.interes <- 1995:2018
+anhos.interes <- 1950:2018
 
 # tmin
 # carpeta.madre <- 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_observados/'
@@ -122,9 +122,9 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/
 
 # Referencia archivos ASCII ----
 
-setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
-db.todos <- read.csv('estaciones_precipitacion_depurado.csv')
-db.pp <- read.csv('estaciones_precipitacion_depurado.csv')
+# setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
+# db.todos <- read.csv('estaciones_precipitacion_depurado.csv')
+# db.pp <- read.csv('estaciones_precipitacion_depurado.csv')
 
 # estaciones
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/VALUE_ECA_86_v2/')
@@ -144,11 +144,11 @@ del_1_al_9 <- paste0('00', 1:9)
 del_10_a_n <- paste0('0', 10:nrow(estaciones.db.todos))
 estaciones.db.todos$station_id <- c(del_1_al_9, del_10_a_n)
 
-estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84')
-# estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84',
-#                                           directorio_dem = 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/capas',
-#                                           nombre_dem = 'dem_regrillado_bilinear_era5.tif')
-# estaciones.db.todos$altitude[estaciones.db.todos$altitude==0] <- 1
+# estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84')
+estaciones.db.todos <- anhadiendo_altitud(estaciones.db.todos, sistema_de_coordenadas = 'wgs84',
+                                          directorio_dem = 'C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/capas',
+                                          nombre_dem = 'dem_regrillado_ngb_era5.tif')
+estaciones.db.todos$altitude[estaciones.db.todos$altitude==0] <- 1
 head(estaciones.db.todos)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/datos_transformados_a_ASCII/')

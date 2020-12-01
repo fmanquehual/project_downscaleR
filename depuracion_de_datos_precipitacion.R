@@ -31,7 +31,7 @@ head(db)
 
 
 
-# Filtro 1: Al menos 1 anho de entrenamiento presente ----
+# Filtro 1: Al menos 5 anho de entrenamiento presente ----
 periodo.entrenamiento <- 1995:2010
 
 db$Date <- as.Date(db$Date)
@@ -201,10 +201,10 @@ plot_series_temporales(db3, estaciones3)
 
 estaciones3
 
-id.filas.a.eliminar1 <- which(db3$archivo.con.coordenadas==estaciones2[5])
-id.filas.a.eliminar2 <- which(db3$archivo.con.coordenadas==estaciones2[7])
+numero.estacion <- c(5,7) ; estaciones2[numero.estacion]
+id.filas.a.eliminar <- which(db3$archivo.con.coordenadas%in%estaciones2[numero.estacion])
 
-db4 <- db3[-c(id.filas.a.eliminar1, id.filas.a.eliminar2),]
+db4 <- db3[-id.filas.a.eliminar,]
 head(db4)
 
 db.depurado <- db4[,-ncol(db4)]
@@ -229,3 +229,25 @@ plot_series_temporales(db.depurado, estaciones4)
 
 setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/bias_correction/')
 # write.csv(db.depurado, 'estaciones_precipitacion_depurado.csv', row.names = FALSE)
+
+# fin ---
+
+
+
+
+# Tabla reporte 1 ----
+# 
+# library(xtable)
+# tabla <- data.frame(estacion=estaciones, estado='conservado', filtro='-')
+# 
+# tabla$estado[tabla$estacion%in%estacion_a_eliminar] <- 'descartado'
+# tabla$estado[tabla$estacion%in%estaciones_que_no_cumplen_umbral] <- 'descartado'
+# tabla$estado[tabla$estacion%in%estaciones2[numero.estacion]] <- 'descartado'
+# 
+# tabla$filtro[tabla$estacion%in%estacion_a_eliminar] <- 1
+# tabla$filtro[tabla$estacion%in%estaciones_que_no_cumplen_umbral] <- 2
+# tabla$filtro[tabla$estacion%in%estaciones2[numero.estacion]] <- 3
+# 
+# xtable(tabla, digits = 0)
+#
+# fin ---

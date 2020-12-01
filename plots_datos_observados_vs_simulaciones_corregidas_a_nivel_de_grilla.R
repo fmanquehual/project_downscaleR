@@ -39,7 +39,7 @@ colnames(db.era5.raw)[3] <- 'valor'
 db.era5.corregido <- db[,c('fecha', 'nombre_estacion', 'valor.era5.corregido')]
 colnames(db.era5.corregido)[3] <- 'valor'
 
-db.corregido.nivel.grilla <- db[,c('fecha', 'nombre_estacion', 'valor.corregido.en.grilla')]
+db.corregido.nivel.grilla <- db[,c('fecha', 'nombre_estacion', 'valor.corregido.idw.en.grilla')]
 colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 
 # fin ---
@@ -51,15 +51,24 @@ colnames(db.corregido.nivel.grilla)[3] <- 'valor'
 # ERA 5 corregido a nivel de estacion, no mostrara informacion en algunos meses para
 # ciertas estaciones debido a la ausencia o falta de datos para un bloque en particular.
 # Esto hace que no se pueda calcular los parametros a y b, por ende, no se realiza la correcion.
-for (i in 1:15) {
+
+nombre.estacion <- unique(db$nombre_estacion) ; nombre.estacion
+
+for (i in 1:length(nombre.estacion)) {
   
-nombre.estacion <- unique(db$nombre_estacion)
 estacion.de.interes <- nombre.estacion[i] ; estacion.de.interes
 
-observado.anual <- db_a_formato_ts(db.observado, estacion = estacion.de.interes)
-era5.raw.anual <- db_a_formato_ts(db.era5.raw, estacion = estacion.de.interes)
-era5.corregido.anual <- db_a_formato_ts(db.era5.corregido, estacion = estacion.de.interes)
-corregido.nivel.grilla.anual <- db_a_formato_ts(db.corregido.nivel.grilla, estacion = estacion.de.interes)
+observado.anual <- db_a_formato_ts(db.observado, estacion = estacion.de.interes,
+                                   calculo_diario = mean, calculo_mensual = mean)
+
+era5.raw.anual <- db_a_formato_ts(db.era5.raw, estacion = estacion.de.interes,
+                                  calculo_diario = mean, calculo_mensual = mean)
+
+era5.corregido.anual <- db_a_formato_ts(db.era5.corregido, estacion = estacion.de.interes,
+                                        calculo_diario = mean, calculo_mensual = mean)
+
+corregido.nivel.grilla.anual <- db_a_formato_ts(db.corregido.nivel.grilla, estacion = estacion.de.interes,
+                                                calculo_diario = mean, calculo_mensual = mean) # sum o mean
 
 # fin ---
 
@@ -93,7 +102,7 @@ png(nombre.plot, width = 720, height = 480, units = "px")
 
 plot(observado.anual, ylim=c(0, valor.maximo), col = c('black'), lty=1, lwd=2, 
      main= estacion.de.interes, sub=paste('Metodo', metodo), 
-     ylab=expression('mm mensual total'^-1), xlab='Mes', xaxt = 'n')
+     ylab=expression('mm mensual promedio'^-1), xlab='Mes', xaxt = 'n')
 
 axis(1, at = 1:12, labels = 1:12)
 # abline(v=c(1:12), h=c(seq(0, valor.maximo, 25)), col='gray')
