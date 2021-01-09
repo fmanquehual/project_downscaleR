@@ -2,7 +2,7 @@
 
 generador_de_fechas <- function(anho, incluir.febrero.29=TRUE){
   
-  anho <- 1995
+  # anho <- 1995
   # incluir.febrero.29 <- FALSE
  
   # Anhos bisiestos

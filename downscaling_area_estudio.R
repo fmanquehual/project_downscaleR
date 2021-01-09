@@ -13,8 +13,8 @@ setwd('C:/Users/Usuario/Documents/Francisco/proyecto_DownscaleR/')
 source('funcion_identificador_de_variables_era5_CEDA.R')
 
 # filtro de datos ----
-meses <- 1:12
-anhos <- 2010:2011
+meses <- 1
+anhos <- 2010:2014
 latitud <- c(-49,-36) # area de estudio CCR
 longitud <- c(-75, -72) # area de estudio CCR
 # latitud <- c(-48, -46) # area de estudio WRF
@@ -110,48 +110,47 @@ spatialPlot(climatology(pr.sum), backdrop.theme = "countries", color.theme = "Yl
 
 
 
-# # u10 ----
-# 
-# # Lectura de datos
-# u10.mean <- loadGridData(dataset = ERA5, 
-#                        var = "u10",
-#                        aggr.d = "mean",
-#                        aggr.m = "mean",
-#                        lonLim = longitud,
-#                        latLim= latitud, 
-#                        season= meses, 
-#                        years = anhos,
-#                        time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
-# str(u10.mean)
-# 
-# # plot 
-# spatialPlot(climatology(u10.mean), backdrop.theme = "countries", color.theme = "jet.colors",
-#             main = '')
-# 
-# # fin ---
-# 
-# 
-# 
-# 
-# # v10 ----
-# 
-# # Lectura de datos
-# v10.mean <- loadGridData(dataset = ERA5, 
-#                          var = "v10",
-#                          aggr.d = "mean",
-#                          aggr.m = "mean",
-#                          lonLim = longitud,
-#                          latLim= latitud, 
-#                          season= meses, 
-#                          years = anhos,
-#                          time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
-# str(v10.mean)
-# 
-# # plot 
-# spatialPlot(climatology(v10.mean), backdrop.theme = "countries", color.theme = "jet.colors",
-#             main = '')
-# # fin ---
+# u10 ----
 
+# Lectura de datos
+u10.mean <- loadGridData(dataset = ERA5,
+                       var = "u10",
+                       aggr.d = "mean",
+                       aggr.m = "mean",
+                       lonLim = longitud,
+                       latLim= latitud,
+                       season= meses,
+                       years = anhos,
+                       time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
+str(u10.mean)
+
+# plot
+spatialPlot(climatology(u10.mean), backdrop.theme = "countries", color.theme = "jet.colors",
+            main = '')
+
+# fin ---
+
+
+
+
+# v10 ----
+
+# Lectura de datos
+v10.mean <- loadGridData(dataset = ERA5,
+                         var = "v10",
+                         aggr.d = "mean",
+                         aggr.m = "mean",
+                         lonLim = longitud,
+                         latLim= latitud,
+                         season= meses,
+                         years = anhos,
+                         time = 'DD') # obtain daily (aggr.d) or monthly (aggr.m) data )
+str(v10.mean)
+
+# plot
+spatialPlot(climatology(v10.mean), backdrop.theme = "countries", color.theme = "jet.colors",
+            main = '')
+# fin ---
 
 
 
